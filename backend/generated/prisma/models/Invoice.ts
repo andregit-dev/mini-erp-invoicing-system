@@ -45,6 +45,8 @@ export type InvoiceMinAggregateOutputType = {
   subtotal: number | null
   tax: number | null
   total: number | null
+  dueDate: Date | null
+  note: string | null
   customerId: string | null
   userId: string | null
   createdAt: Date | null
@@ -58,6 +60,8 @@ export type InvoiceMaxAggregateOutputType = {
   subtotal: number | null
   tax: number | null
   total: number | null
+  dueDate: Date | null
+  note: string | null
   customerId: string | null
   userId: string | null
   createdAt: Date | null
@@ -71,6 +75,8 @@ export type InvoiceCountAggregateOutputType = {
   subtotal: number
   tax: number
   total: number
+  dueDate: number
+  note: number
   customerId: number
   userId: number
   createdAt: number
@@ -98,6 +104,8 @@ export type InvoiceMinAggregateInputType = {
   subtotal?: true
   tax?: true
   total?: true
+  dueDate?: true
+  note?: true
   customerId?: true
   userId?: true
   createdAt?: true
@@ -111,6 +119,8 @@ export type InvoiceMaxAggregateInputType = {
   subtotal?: true
   tax?: true
   total?: true
+  dueDate?: true
+  note?: true
   customerId?: true
   userId?: true
   createdAt?: true
@@ -124,6 +134,8 @@ export type InvoiceCountAggregateInputType = {
   subtotal?: true
   tax?: true
   total?: true
+  dueDate?: true
+  note?: true
   customerId?: true
   userId?: true
   createdAt?: true
@@ -224,6 +236,8 @@ export type InvoiceGroupByOutputType = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date
+  note: string | null
   customerId: string
   userId: string | null
   createdAt: Date
@@ -260,6 +274,8 @@ export type InvoiceWhereInput = {
   subtotal?: Prisma.FloatFilter<"Invoice"> | number
   tax?: Prisma.FloatFilter<"Invoice"> | number
   total?: Prisma.FloatFilter<"Invoice"> | number
+  dueDate?: Prisma.DateTimeFilter<"Invoice"> | Date | string
+  note?: Prisma.StringNullableFilter<"Invoice"> | string | null
   customerId?: Prisma.StringFilter<"Invoice"> | string
   userId?: Prisma.StringNullableFilter<"Invoice"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
@@ -276,6 +292,8 @@ export type InvoiceOrderByWithRelationInput = {
   subtotal?: Prisma.SortOrder
   tax?: Prisma.SortOrder
   total?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -295,6 +313,8 @@ export type InvoiceWhereUniqueInput = Prisma.AtLeast<{
   subtotal?: Prisma.FloatFilter<"Invoice"> | number
   tax?: Prisma.FloatFilter<"Invoice"> | number
   total?: Prisma.FloatFilter<"Invoice"> | number
+  dueDate?: Prisma.DateTimeFilter<"Invoice"> | Date | string
+  note?: Prisma.StringNullableFilter<"Invoice"> | string | null
   customerId?: Prisma.StringFilter<"Invoice"> | string
   userId?: Prisma.StringNullableFilter<"Invoice"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
@@ -311,6 +331,8 @@ export type InvoiceOrderByWithAggregationInput = {
   subtotal?: Prisma.SortOrder
   tax?: Prisma.SortOrder
   total?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  note?: Prisma.SortOrderInput | Prisma.SortOrder
   customerId?: Prisma.SortOrder
   userId?: Prisma.SortOrderInput | Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -332,6 +354,8 @@ export type InvoiceScalarWhereWithAggregatesInput = {
   subtotal?: Prisma.FloatWithAggregatesFilter<"Invoice"> | number
   tax?: Prisma.FloatWithAggregatesFilter<"Invoice"> | number
   total?: Prisma.FloatWithAggregatesFilter<"Invoice"> | number
+  dueDate?: Prisma.DateTimeWithAggregatesFilter<"Invoice"> | Date | string
+  note?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
   customerId?: Prisma.StringWithAggregatesFilter<"Invoice"> | string
   userId?: Prisma.StringNullableWithAggregatesFilter<"Invoice"> | string | null
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Invoice"> | Date | string
@@ -345,6 +369,8 @@ export type InvoiceCreateInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.CustomerCreateNestedOneWithoutInvoicesInput
@@ -359,6 +385,8 @@ export type InvoiceUncheckedCreateInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   customerId: string
   userId?: string | null
   createdAt?: Date | string
@@ -373,6 +401,8 @@ export type InvoiceUpdateInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.CustomerUpdateOneRequiredWithoutInvoicesNestedInput
@@ -387,6 +417,8 @@ export type InvoiceUncheckedUpdateInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -401,6 +433,8 @@ export type InvoiceCreateManyInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   customerId: string
   userId?: string | null
   createdAt?: Date | string
@@ -414,6 +448,8 @@ export type InvoiceUpdateManyMutationInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -425,6 +461,8 @@ export type InvoiceUncheckedUpdateManyInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -448,6 +486,8 @@ export type InvoiceCountOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   tax?: Prisma.SortOrder
   total?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -467,6 +507,8 @@ export type InvoiceMaxOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   tax?: Prisma.SortOrder
   total?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -480,6 +522,8 @@ export type InvoiceMinOrderByAggregateInput = {
   subtotal?: Prisma.SortOrder
   tax?: Prisma.SortOrder
   total?: Prisma.SortOrder
+  dueDate?: Prisma.SortOrder
+  note?: Prisma.SortOrder
   customerId?: Prisma.SortOrder
   userId?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -614,6 +658,8 @@ export type InvoiceCreateWithoutUserInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.CustomerCreateNestedOneWithoutInvoicesInput
@@ -627,6 +673,8 @@ export type InvoiceUncheckedCreateWithoutUserInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   customerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -668,6 +716,8 @@ export type InvoiceScalarWhereInput = {
   subtotal?: Prisma.FloatFilter<"Invoice"> | number
   tax?: Prisma.FloatFilter<"Invoice"> | number
   total?: Prisma.FloatFilter<"Invoice"> | number
+  dueDate?: Prisma.DateTimeFilter<"Invoice"> | Date | string
+  note?: Prisma.StringNullableFilter<"Invoice"> | string | null
   customerId?: Prisma.StringFilter<"Invoice"> | string
   userId?: Prisma.StringNullableFilter<"Invoice"> | string | null
   createdAt?: Prisma.DateTimeFilter<"Invoice"> | Date | string
@@ -681,6 +731,8 @@ export type InvoiceCreateWithoutCustomerInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   user?: Prisma.UserCreateNestedOneWithoutInvoicesInput
@@ -694,6 +746,8 @@ export type InvoiceUncheckedCreateWithoutCustomerInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -732,6 +786,8 @@ export type InvoiceCreateWithoutItemsInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
   customer: Prisma.CustomerCreateNestedOneWithoutInvoicesInput
@@ -745,6 +801,8 @@ export type InvoiceUncheckedCreateWithoutItemsInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   customerId: string
   userId?: string | null
   createdAt?: Date | string
@@ -774,6 +832,8 @@ export type InvoiceUpdateWithoutItemsInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.CustomerUpdateOneRequiredWithoutInvoicesNestedInput
@@ -787,6 +847,8 @@ export type InvoiceUncheckedUpdateWithoutItemsInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -800,6 +862,8 @@ export type InvoiceCreateManyUserInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   customerId: string
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -812,6 +876,8 @@ export type InvoiceUpdateWithoutUserInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   customer?: Prisma.CustomerUpdateOneRequiredWithoutInvoicesNestedInput
@@ -825,6 +891,8 @@ export type InvoiceUncheckedUpdateWithoutUserInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -838,6 +906,8 @@ export type InvoiceUncheckedUpdateManyWithoutUserInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   customerId?: Prisma.StringFieldUpdateOperationsInput | string
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -850,6 +920,8 @@ export type InvoiceCreateManyCustomerInput = {
   subtotal: number
   tax: number
   total: number
+  dueDate: Date | string
+  note?: string | null
   userId?: string | null
   createdAt?: Date | string
   updatedAt?: Date | string
@@ -862,6 +934,8 @@ export type InvoiceUpdateWithoutCustomerInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   user?: Prisma.UserUpdateOneWithoutInvoicesNestedInput
@@ -875,6 +949,8 @@ export type InvoiceUncheckedUpdateWithoutCustomerInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -888,6 +964,8 @@ export type InvoiceUncheckedUpdateManyWithoutCustomerInput = {
   subtotal?: Prisma.FloatFieldUpdateOperationsInput | number
   tax?: Prisma.FloatFieldUpdateOperationsInput | number
   total?: Prisma.FloatFieldUpdateOperationsInput | number
+  dueDate?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  note?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   userId?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -931,6 +1009,8 @@ export type InvoiceSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs 
   subtotal?: boolean
   tax?: boolean
   total?: boolean
+  dueDate?: boolean
+  note?: boolean
   customerId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -948,6 +1028,8 @@ export type InvoiceSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Exten
   subtotal?: boolean
   tax?: boolean
   total?: boolean
+  dueDate?: boolean
+  note?: boolean
   customerId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -963,6 +1045,8 @@ export type InvoiceSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Exten
   subtotal?: boolean
   tax?: boolean
   total?: boolean
+  dueDate?: boolean
+  note?: boolean
   customerId?: boolean
   userId?: boolean
   createdAt?: boolean
@@ -978,13 +1062,15 @@ export type InvoiceSelectScalar = {
   subtotal?: boolean
   tax?: boolean
   total?: boolean
+  dueDate?: boolean
+  note?: boolean
   customerId?: boolean
   userId?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type InvoiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invoiceNumber" | "status" | "subtotal" | "tax" | "total" | "customerId" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["invoice"]>
+export type InvoiceOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "invoiceNumber" | "status" | "subtotal" | "tax" | "total" | "dueDate" | "note" | "customerId" | "userId" | "createdAt" | "updatedAt", ExtArgs["result"]["invoice"]>
 export type InvoiceInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   customer?: boolean | Prisma.CustomerDefaultArgs<ExtArgs>
   user?: boolean | Prisma.Invoice$userArgs<ExtArgs>
@@ -1014,6 +1100,8 @@ export type $InvoicePayload<ExtArgs extends runtime.Types.Extensions.InternalArg
     subtotal: number
     tax: number
     total: number
+    dueDate: Date
+    note: string | null
     customerId: string
     userId: string | null
     createdAt: Date
@@ -1450,6 +1538,8 @@ export interface InvoiceFieldRefs {
   readonly subtotal: Prisma.FieldRef<"Invoice", 'Float'>
   readonly tax: Prisma.FieldRef<"Invoice", 'Float'>
   readonly total: Prisma.FieldRef<"Invoice", 'Float'>
+  readonly dueDate: Prisma.FieldRef<"Invoice", 'DateTime'>
+  readonly note: Prisma.FieldRef<"Invoice", 'String'>
   readonly customerId: Prisma.FieldRef<"Invoice", 'String'>
   readonly userId: Prisma.FieldRef<"Invoice", 'String'>
   readonly createdAt: Prisma.FieldRef<"Invoice", 'DateTime'>

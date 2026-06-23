@@ -8,10 +8,13 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor(private configService: ConfigService) {
+    const databaseUrl = configService.get<string>('DATABASE_URL');
+    console.log('🔍 DATABASE_URL:', databaseUrl);
+
     super({
       datasources: {
         db: {
-          url: configService.get<string>('DATABASE_URL'),
+          url: databaseUrl,
         },
       },
     });
@@ -19,6 +22,7 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
+    console.log('✅ Database connected!');
   }
 
   async onModuleDestroy() {

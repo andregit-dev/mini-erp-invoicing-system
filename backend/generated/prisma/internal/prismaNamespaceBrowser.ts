@@ -101,6 +101,8 @@ export const InvoiceScalarFieldEnum = {
   subtotal: 'subtotal',
   tax: 'tax',
   total: 'total',
+  dueDate: 'dueDate',
+  note: 'note',
   customerId: 'customerId',
   userId: 'userId',
   createdAt: 'createdAt',

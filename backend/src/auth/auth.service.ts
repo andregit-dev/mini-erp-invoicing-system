@@ -17,7 +17,6 @@ export class AuthService {
   ) {}
 
   async register(dto: RegisterDto) {
-    // Cek email sudah dipake
     const existingUser = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -26,10 +25,8 @@ export class AuthService {
       throw new ConflictException('Email already registered');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(dto.password, 10);
 
-    // Create user
     const user = await this.prisma.user.create({
       data: {
         email: dto.email,
@@ -46,12 +43,12 @@ export class AuthService {
 
     return {
       user,
-      access_token: this.generateToken(user.id, user.email),
+      // access_token: this.generateToken(user.id, user.email),
+      access_token: this.jwtService.sign({ sub: user.id, email: user.email }),
     };
   }
 
   async login(dto: LoginDto) {
-    // Cari user
     const user = await this.prisma.user.findUnique({
       where: { email: dto.email },
     });
@@ -60,7 +57,6 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Cek password
     const isPasswordValid = await bcrypt.compare(dto.password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
@@ -72,7 +68,7 @@ export class AuthService {
         email: user.email,
         name: user.name,
       },
-      access_token: this.generateToken(user.id, user.email),
+      access_token: this.jwtService.sign({ sub: user.id, email: user.email }),
     };
   }
 

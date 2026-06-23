@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { FilterInvoiceDto } from './dto/filter-invoice.dto';
-// import { InvoiceStatus } from '../../../generated/prisma/enums';
+import { InvoiceStatus } from '../../generated/prisma/enums';
 
 @Injectable()
 export class InvoicesService {
@@ -129,17 +129,24 @@ export class InvoicesService {
     const invoice = await this.findOne(id);
 
     // Validasi status flow
-    const statusFlow = {
-      DRAFT: ['SENT'],
-      SENT: ['PAID', 'OVERDUE', 'CANCELLED'],
-      PAID: [],
-      OVERDUE: ['PAID', 'CANCELLED'],
-      CANCELLED: [],
+    const statusFlow: Record<InvoiceStatus, InvoiceStatus[]> = {
+      [InvoiceStatus.DRAFT]: [InvoiceStatus.SENT],
+      [InvoiceStatus.SENT]: [
+        InvoiceStatus.PAID,
+        InvoiceStatus.OVERDUE,
+        InvoiceStatus.CANCELLED,
+      ],
+      [InvoiceStatus.PAID]: [],
+      [InvoiceStatus.OVERDUE]: [InvoiceStatus.PAID, InvoiceStatus.CANCELLED],
+      [InvoiceStatus.CANCELLED]: [],
     };
 
-    if (!statusFlow[invoice.status].includes(dto.status)) {
+    const currentStatus = invoice.status as InvoiceStatus;
+    const newStatus = dto.status as InvoiceStatus;
+
+    if (!statusFlow[currentStatus]?.includes(newStatus)) {
       throw new BadRequestException(
-        `Cannot change status from ${invoice.status} to ${dto.status}`,
+        `Cannot change status from ${currentStatus} to ${newStatus}`,
       );
     }
 
@@ -153,7 +160,7 @@ export class InvoicesService {
     });
   }
 
-  async getDashboard(userId?: string) {
+  async getDashboard(userId: string) {
     const where = userId ? { userId } : {};
 
     // Total invoices
