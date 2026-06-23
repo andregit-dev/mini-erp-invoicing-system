@@ -1,0 +1,68 @@
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Request,
+} from '@nestjs/common';
+import {
+  // ApiTags,
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+} from '@nestjs/swagger';
+import { CustomersService } from './customers.service';
+import { CreateCustomerDto } from './dto/create-customer.dto';
+import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+@ApiBearerAuth()
+@UseGuards(JwtAuthGuard)
+@Controller('customers')
+export class CustomersController {
+  constructor(private readonly customersService: CustomersService) {}
+
+  @Post()
+  @ApiOperation({ summary: 'Create new customer' })
+  @ApiResponse({ status: 201, description: 'Customer created successfully' })
+  create(@Body() createCustomerDto: CreateCustomerDto, @Request() req) {
+    return this.customersService.create(createCustomerDto, req.user.id);
+  }
+
+  @Get()
+  @ApiOperation({ summary: 'Get all customers' })
+  @ApiResponse({ status: 200, description: 'List of customers' })
+  findAll() {
+    return this.customersService.findAll();
+  }
+
+  @Get(':id')
+  @ApiOperation({ summary: 'Get customer by ID' })
+  @ApiResponse({ status: 200, description: 'Customer found' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  findOne(@Param('id') id: string) {
+    return this.customersService.findOne(id);
+  }
+
+  @Patch(':id')
+  @ApiOperation({ summary: 'Update customer' })
+  @ApiResponse({ status: 200, description: 'Customer updated successfully' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  update(
+    @Param('id') id: string,
+    @Body() updateCustomerDto: UpdateCustomerDto,
+  ) {
+    return this.customersService.update(id, updateCustomerDto);
+  }
+
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete customer' })
+  @ApiResponse({ status: 200, description: 'Customer deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Customer not found' })
+  remove(@Param('id') id: string) {
+    return this.customersService.remove(id);
+  }
+}
