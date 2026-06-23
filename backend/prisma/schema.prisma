@@ -39,6 +39,8 @@ model Invoice {
   subtotal      Float
   tax           Float
   total         Float
+  dueDate       DateTime
+  note          String?
   customerId    String
   customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   userId        String?

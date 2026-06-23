@@ -1,15 +1,20 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
 import { PrismaClient } from '../../generated/prisma/client';
-import { ConfigService } from '@nestjs/config';
+import * as dotenv from 'dotenv';
+import * as path from 'path';
+
+// Load .env dari root
+dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 @Injectable()
 export class PrismaService
   extends PrismaClient
   implements OnModuleInit, OnModuleDestroy
 {
-  constructor(private configService: ConfigService) {
-    const databaseUrl = configService.get<string>('DATABASE_URL');
+  constructor() {
+    const databaseUrl = process.env.DATABASE_URL;
     console.log('🔍 DATABASE_URL:', databaseUrl);
+    console.log('📁 Current directory:', process.cwd());
 
     super({
       datasources: {
