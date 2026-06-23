@@ -1,0 +1,20 @@
+import { ApiPropertyOptional } from '@nestjs/swagger';
+import { IsOptional, IsEnum, IsDateString } from 'class-validator';
+import { InvoiceStatus } from '../../../generated/prisma/enums';
+
+export class FilterInvoiceDto {
+  @ApiPropertyOptional({ enum: InvoiceStatus })
+  @IsOptional()
+  @IsEnum(InvoiceStatus)
+  status?: InvoiceStatus;
+
+  @ApiPropertyOptional({ example: '2026-01-01' })
+  @IsOptional()
+  @IsDateString()
+  startDate?: string;
+
+  @ApiPropertyOptional({ example: '2026-12-31' })
+  @IsOptional()
+  @IsDateString()
+  endDate?: string;
+}
