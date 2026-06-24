@@ -73,6 +73,7 @@ export class InvoicesService {
     filters: FilterInvoiceDto,
     page: number = 1,
     limit: number = 10,
+    search?: string,
   ) {
     const skip = (page - 1) * limit;
 
@@ -80,10 +81,12 @@ export class InvoicesService {
       userId,
     };
 
+    // Filter by status
     if (filters.status) {
       where.status = filters.status;
     }
 
+    // Filter by date range
     if (filters.startDate || filters.endDate) {
       where.createdAt = {};
       if (filters.startDate) {
@@ -92,6 +95,17 @@ export class InvoicesService {
       if (filters.endDate) {
         where.createdAt.lte = new Date(filters.endDate);
       }
+    }
+
+    if (search) {
+      where.OR = [
+        { invoiceNumber: { contains: search } },
+        {
+          customer: {
+            name: { contains: search },
+          },
+        },
+      ];
     }
 
     const [data, total] = await Promise.all([

@@ -6,6 +6,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { getToken, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
+import { Search, X, Loader2 } from 'lucide-react';
 
 interface Invoice {
   id: string;
@@ -29,6 +30,9 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
   const [updating, setUpdating] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
@@ -39,18 +43,18 @@ export default function InvoicesPage() {
 
   const fetchInvoices = async (page: number = 1) => {
     setLoading(true);
+    setIsSearching(false);
     try {
-      const url = filter 
-        ? `/invoices?status=${filter}&page=${page}&limit=10` 
-        : `/invoices?page=${page}&limit=10`;
+      let url = `/invoices?page=${page}&limit=10`;
+      if (filter) url += `&status=${filter}`;
+      if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      
       const res = await api.get(url);
       
-      // Handle paginated response
       if (res.data && res.data.data) {
         setInvoices(res.data.data);
         setPagination(res.data.meta);
       } else {
-        // Fallback for non-paginated response
         setInvoices(res.data);
       }
     } catch {
@@ -60,6 +64,16 @@ export default function InvoicesPage() {
     }
   };
 
+  // Debounce search: tunggu 500ms setelah user stop typing
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(search);
+      setIsSearching(false);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [search]);
+
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -67,7 +81,7 @@ export default function InvoicesPage() {
       return;
     }
     fetchInvoices();
-  }, [router, filter]);
+  }, [router, filter, debouncedSearch]);
 
   const updateStatus = async (id: string, newStatus: string) => {
     setUpdating(id);
@@ -109,6 +123,12 @@ export default function InvoicesPage() {
     }
   };
 
+  const clearSearch = () => {
+    setSearch('');
+    setDebouncedSearch('');
+    setIsSearching(false);
+  };
+
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-6xl mx-auto">
@@ -142,10 +162,43 @@ export default function InvoicesPage() {
           </div>
         </div>
 
+        {/* Search Box */}
+        <div className="relative mb-4 max-w-md">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search by invoice number or customer..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                if (e.target.value) setIsSearching(true);
+              }}
+              className="w-full pl-10 pr-10 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
+            />
+            {search && (
+              <button
+                onClick={clearSearch}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+            {isSearching && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+              </div>
+            )}
+          </div>
+          <span className="text-xs text-gray-500 mt-1 block">
+            {loading ? 'Loading...' : `Found ${pagination.total} invoices`}
+          </span>
+        </div>
+
         {loading ? (
           <div className="text-center py-8 text-gray-600">Loading...</div>
         ) : invoices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No invoices yet</div>
+          <div className="text-center py-8 text-gray-500">No invoices found</div>
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
