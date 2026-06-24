@@ -6,7 +6,6 @@ import Link from 'next/link';
 import { api } from '@/lib/api';
 import { getToken, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 
 interface Invoice {
   id: string;
@@ -18,18 +17,42 @@ interface Invoice {
   createdAt: string;
 }
 
+interface PaginationMeta {
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export default function InvoicesPage() {
   const router = useRouter();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
   const [updating, setUpdating] = useState<string | null>(null);
+  const [pagination, setPagination] = useState<PaginationMeta>({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 0,
+  });
 
-  const fetchInvoices = async () => {
+  const fetchInvoices = async (page: number = 1) => {
+    setLoading(true);
     try {
-      const url = filter ? `/invoices?status=${filter}` : '/invoices';
+      const url = filter 
+        ? `/invoices?status=${filter}&page=${page}&limit=10` 
+        : `/invoices?page=${page}&limit=10`;
       const res = await api.get(url);
-      setInvoices(res.data);
+      
+      // Handle paginated response
+      if (res.data && res.data.data) {
+        setInvoices(res.data.data);
+        setPagination(res.data.meta);
+      } else {
+        // Fallback for non-paginated response
+        setInvoices(res.data);
+      }
     } catch {
       // 401 auto handled
     } finally {
@@ -50,7 +73,7 @@ export default function InvoicesPage() {
     setUpdating(id);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
-      fetchInvoices();
+      fetchInvoices(pagination.page);
     } catch (error: any) {
       alert(error.response?.data?.message || 'Failed to update status');
     } finally {
@@ -78,6 +101,12 @@ export default function InvoicesPage() {
       CANCELLED: [],
     };
     return statusFlow[currentStatus] || [];
+  };
+
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= pagination.totalPages) {
+      fetchInvoices(page);
+    }
   };
 
   return (
@@ -118,67 +147,98 @@ export default function InvoicesPage() {
         ) : invoices.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No invoices yet</div>
         ) : (
-          <div className="bg-white rounded-lg shadow overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Invoice #</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Total</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
-                  <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {invoices.map((invoice) => {
-                  const nextStatuses = getNextStatuses(invoice.status);
-                  return (
-                    <tr key={invoice.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">
-                        <Link
-                          href={`/invoices/${invoice.id}`}
-                          className="text-blue-600 hover:underline font-medium"
-                        >
-                          {invoice.invoiceNumber}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{invoice.customer.name}</td>
-                      <td className="px-4 py-3 text-sm text-gray-900">Rp {invoice.total.toLocaleString()}</td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
-                          {invoice.status}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex gap-1">
-                          {nextStatuses.length > 0 ? (
-                            <select
-                              className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
-                              onChange={(e) => updateStatus(invoice.id, e.target.value)}
-                              value=""
-                              disabled={updating === invoice.id}
-                            >
-                              <option value="">Update...</option>
-                              {nextStatuses.map((status) => (
-                                <option key={status} value={status}>
-                                  {status}
-                                </option>
-                              ))}
-                            </select>
-                          ) : (
-                            <span className="text-xs text-gray-400">No actions</span>
-                          )}
-                          {updating === invoice.id && (
-                            <span className="text-xs text-gray-500">Updating...</span>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <>
+            <div className="bg-white rounded-lg shadow overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Invoice #</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Total</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {invoices.map((invoice) => {
+                    const nextStatuses = getNextStatuses(invoice.status);
+                    return (
+                      <tr key={invoice.id} className="border-t border-gray-100 hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm">
+                          <Link
+                            href={`/invoices/${invoice.id}`}
+                            className="text-blue-600 hover:underline font-medium"
+                          >
+                            {invoice.invoiceNumber}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{invoice.customer.name}</td>
+                        <td className="px-4 py-3 text-sm text-gray-900">Rp {invoice.total.toLocaleString()}</td>
+                        <td className="px-4 py-3">
+                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
+                            {invoice.status}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-1">
+                            {nextStatuses.length > 0 ? (
+                              <select
+                                className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                onChange={(e) => updateStatus(invoice.id, e.target.value)}
+                                value=""
+                                disabled={updating === invoice.id}
+                              >
+                                <option value="">Update...</option>
+                                {nextStatuses.map((status) => (
+                                  <option key={status} value={status}>
+                                    {status}
+                                  </option>
+                                ))}
+                              </select>
+                            ) : (
+                              <span className="text-xs text-gray-400">No actions</span>
+                            )}
+                            {updating === invoice.id && (
+                              <span className="text-xs text-gray-500">Updating...</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination */}
+            {pagination.totalPages > 1 && (
+              <div className="flex justify-between items-center mt-4">
+                <div className="text-sm text-gray-600">
+                  Showing {(pagination.page - 1) * pagination.limit + 1} -{' '}
+                  {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => goToPage(pagination.page - 1)}
+                    disabled={pagination.page <= 1}
+                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                  >
+                    Previous
+                  </button>
+                  <span className="px-3 py-1 text-sm text-gray-700">
+                    Page {pagination.page} of {pagination.totalPages}
+                  </span>
+                  <button
+                    onClick={() => goToPage(pagination.page + 1)}
+                    disabled={pagination.page >= pagination.totalPages}
+                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                  >
+                    Next
+                  </button>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>
