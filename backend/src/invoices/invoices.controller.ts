@@ -37,11 +37,22 @@ export class InvoicesController {
   }
 
   @Get()
-  @ApiOperation({ summary: 'Get all invoices with filters' })
+  @ApiOperation({ summary: 'Get all invoices with filters and pagination' })
   @ApiResponse({ status: 200, description: 'List of invoices' })
-  findAll(@Query() filters: FilterInvoiceDto) {
-    return this.invoicesService.findAll(filters);
+  findAll(
+    @Query() filters: FilterInvoiceDto,
+    @Query('page') page: string = '1',
+    @Query('limit') limit: string = '10',
+  ) {
+    return this.invoicesService.findAll(
+      filters,
+      parseInt(page, 10),
+      parseInt(limit, 10),
+    );
   }
+  // GET /invoices?page=1&limit=5
+  // GET /invoices?page=2&limit=5
+  // GET /invoices?status=PAID&page=1&limit=5
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get dashboard summary' })

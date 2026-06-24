@@ -68,7 +68,13 @@ export class InvoicesService {
     });
   }
 
-  async findAll(filters: FilterInvoiceDto) {
+  async findAll(
+    filters: FilterInvoiceDto,
+    page: number = 1,
+    limit: number = 10,
+  ) {
+    const skip = (page - 1) * limit;
+
     const where: any = {};
 
     if (filters.status) {
@@ -85,21 +91,36 @@ export class InvoicesService {
       }
     }
 
-    return this.prisma.invoice.findMany({
-      where,
-      include: {
-        customer: true,
-        items: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+    const [data, total] = await Promise.all([
+      this.prisma.invoice.findMany({
+        where,
+        include: {
+          customer: true,
+          items: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.invoice.count({ where }),
+    ]);
+
+    return {
+      data,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
       },
-      orderBy: { createdAt: 'desc' },
-    });
+    };
   }
 
   async findOne(id: string) {
