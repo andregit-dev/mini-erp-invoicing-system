@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 // interface ErrorResponse {
 //   message: string;
@@ -30,8 +31,10 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof AxiosError) {
         setError(err.response?.data?.message || 'Login failed');
+        toast.error(err.response?.data?.message || 'Login failed');
       } else {
         setError('An unexpected error occurred');
+        toast.error('An unexpected error occurred');
       }
     }
   };

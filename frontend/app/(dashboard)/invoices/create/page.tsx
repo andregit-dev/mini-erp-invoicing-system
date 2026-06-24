@@ -7,6 +7,7 @@ import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 interface Customer {
   id: string;
@@ -79,7 +80,7 @@ export default function CreateInvoicePage() {
 
   const removeItem = (id: string) => {
     if (items.length === 1) {
-      alert('Minimal 1 item');
+      toast.warning('Minimal 1 item');
       return;
     }
     setItems(items.filter((item) => item.id !== id));
@@ -93,17 +94,14 @@ export default function CreateInvoicePage() {
     e.preventDefault();
     setLoading(true);
 
-    // console.log('🔍 Customer ID:', form.customerId);
-    // console.log('🔍 Items:', items);
-
     if (!form.customerId) {
-      alert('Please select a customer');
+      toast.error('Please select a customer');
       setLoading(false);
       return;
     }
 
     if (items.some((item) => !item.description || item.quantity < 1 || item.unitPrice < 1)) {
-      alert('Please fill all item fields correctly');
+      toast.error('Please fill all item fields correctly');
       setLoading(false);
       return;
     }
@@ -120,13 +118,14 @@ export default function CreateInvoicePage() {
         })),
       });
 
+      toast.success('Invoice created successfully!');
       router.push('/invoices');
     } catch (error) {
       if (error instanceof AxiosError) {
         const message = error.response?.data?.message || 'Failed to create invoice';
-        alert(message);
+        toast.error(message);
       } else {
-        alert('An unexpected error occurred');
+        toast.error('An unexpected error occurred');
       }
       console.error(error);
     } finally {

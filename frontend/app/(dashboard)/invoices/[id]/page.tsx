@@ -7,6 +7,7 @@ import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 interface InvoiceDetail {
   id: string;
@@ -52,7 +53,7 @@ export default function InvoiceDetailPage() {
       const res = await api.get(`/invoices/${id}`);
       setInvoice(res.data);
     } catch (error) {
-      alert('Invoice not found');
+      toast.error('Invoice not found');
       router.push('/invoices');
     } finally {
       setLoading(false);
@@ -74,12 +75,13 @@ export default function InvoiceDetailPage() {
     setUpdating(true);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
       fetchInvoice();
     } catch (error) {
       if (error instanceof AxiosError) {
-        alert(error.response?.data?.message || 'Failed to update status');
+        toast.error(error.response?.data?.message || 'Failed to update status');
       } else {
-        alert('An unexpected error occurred');
+        toast.error('An unexpected error occurred');
       }
     } finally {
       setUpdating(false);

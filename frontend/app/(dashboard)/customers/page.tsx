@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Search, X, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
+import { toast } from 'sonner';
 
 interface Customer {
   id: string;
@@ -107,8 +108,10 @@ export default function CustomersPage() {
     try {
       if (editingId) {
         await api.patch(`/customers/${editingId}`, form);
+        toast.success('Customer updated successfully!'); // ← TAMBAH
       } else {
         await api.post('/customers', form);
+        toast.success('Customer created successfully!'); // ← TAMBAH
       }
       setShowForm(false);
       setEditingId(null);
@@ -150,7 +153,7 @@ export default function CustomersPage() {
         await api.delete(`/customers/${id}`);
         fetchCustomers(pagination.page);
       } catch (error) {
-        alert('Failed to delete customer');
+        toast.error('Failed to delete customer');
         console.error(error);
       }
     }

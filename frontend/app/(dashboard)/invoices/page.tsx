@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { AxiosError } from 'axios';
 import { Search, X, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 interface Invoice {
   id: string;
@@ -90,12 +91,13 @@ export default function InvoicesPage() {
     setUpdating(id);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
       fetchInvoices(pagination.page);
     } catch (error) {
       if (error instanceof AxiosError) {
-        alert(error.response?.data?.message || 'Failed to update status');
+        toast.error(error.response?.data?.message || 'Failed to update status');
       } else {
-        alert('An unexpected error occurred');
+        toast.error('An unexpected error occurred');
       }
     } finally {
       setUpdating(null);
