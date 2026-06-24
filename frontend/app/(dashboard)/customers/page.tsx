@@ -3,6 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
@@ -12,6 +14,8 @@ import { Search, X, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
+import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
+import { FormField, FormCard, FormActions } from '@/components/ui/Form';
 
 interface Customer {
   id: string;
@@ -44,8 +48,17 @@ export default function CustomersPage() {
   });
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
-  const [formError, setFormError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+    setValue,
+  } = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: { name: '', email: '', phone: '', address: '' },
+  });
 
   const fetchCustomers = async (page: number = 1) => {
     setLoading(true);
@@ -73,7 +86,6 @@ export default function CustomersPage() {
       setDebouncedSearch(search);
       setIsSearching(false);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -89,63 +101,41 @@ export default function CustomersPage() {
     init();
   }, [router, debouncedSearch]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
-
-    if (!form.name.trim()) {
-      setFormError('Name is required');
-      return;
-    }
-    if (!form.email.trim()) {
-      setFormError('Email is required');
-      return;
-    }
-    if (!form.email.includes('@')) {
-      setFormError('Invalid email format');
-      return;
-    }
-
+  const onSubmit = async (data: CustomerFormData) => {
     try {
       if (editingId) {
-        await api.patch(`/customers/${editingId}`, form);
-        toast.success('Customer updated successfully!'); // ← TAMBAH
+        await api.patch(`/customers/${editingId}`, data);
+        toast.success('Customer updated successfully!');
       } else {
-        await api.post('/customers', form);
-        toast.success('Customer created successfully!'); // ← TAMBAH
+        await api.post('/customers', data);
+        toast.success('Customer created successfully!');
       }
       setShowForm(false);
       setEditingId(null);
-      setForm({ name: '', email: '', phone: '', address: '' });
+      reset();
       fetchCustomers(pagination.page);
     } catch (error) {
       if (error instanceof AxiosError) {
-        const message = error.response?.data?.message || 'Failed to save customer';
-        setFormError(message);
+        toast.error(error.response?.data?.message || 'Failed to save customer');
       } else {
-        setFormError('An unexpected error occurred');
+        toast.error('An unexpected error occurred');
       }
-      console.error(error);
     }
   };
 
   const handleEdit = (customer: Customer) => {
     setEditingId(customer.id);
-    setForm({
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone || '',
-      address: customer.address || '',
-    });
+    setValue('name', customer.name);
+    setValue('email', customer.email);
+    setValue('phone', customer.phone || '');
+    setValue('address', customer.address || '');
     setShowForm(true);
-    setFormError('');
   };
 
   const handleCancel = () => {
     setShowForm(false);
     setEditingId(null);
-    setForm({ name: '', email: '', phone: '', address: '' });
-    setFormError('');
+    reset();
   };
 
   const handleDelete = async (id: string) => {
@@ -155,7 +145,6 @@ export default function CustomersPage() {
         fetchCustomers(pagination.page);
       } catch (error) {
         toast.error('Failed to delete customer');
-        console.error(error);
       }
     }
   };
@@ -179,8 +168,7 @@ export default function CustomersPage() {
           <div className="flex gap-2">
             <Button onClick={() => {
               setEditingId(null);
-              setForm({ name: '', email: '', phone: '', address: '' });
-              setFormError('');
+              reset();
               setShowForm(!showForm);
             }}>
               {showForm ? 'Cancel' : '+ Add Customer'}
@@ -191,7 +179,7 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* Search Box - SAMA KAYAK SEBELUMNYA */}
+        {/* Search Box */}
         <div className="relative mb-4 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -225,60 +213,38 @@ export default function CustomersPage() {
           </div>
         </div>
 
+        {/* Form dengan React Hook Form + Zod */}
         {showForm && (
-          <Card className="mb-6">
+          <FormCard>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
               {editingId ? 'Edit Customer' : 'Add New Customer'}
             </h2>
-            
-            {formError && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">
-                {formError}
-              </div>
-            )}
-            
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Name"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Customer name"
-              />
-              <Input
-                label="Email"
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="customer@example.com"
-              />
-              <Input
-                label="Phone"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="Phone number"
-              />
-              <Input
-                label="Address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
-                placeholder="Address"
-              />
-              <div className="md:col-span-2 flex gap-2">
-                <Button type="submit">
+            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField label="Name" error={errors.name?.message} required>
+                <Input {...register('name')} placeholder="Customer name" />
+              </FormField>
+              <FormField label="Email" error={errors.email?.message} required>
+                <Input {...register('email')} placeholder="customer@example.com" />
+              </FormField>
+              <FormField label="Phone" error={errors.phone?.message}>
+                <Input {...register('phone')} placeholder="Phone number" />
+              </FormField>
+              <FormField label="Address" error={errors.address?.message}>
+                <Input {...register('address')} placeholder="Address" />
+              </FormField>
+              <FormActions>
+                <Button type="submit" loading={isSubmitting}>
                   {editingId ? 'Update' : 'Save'}
                 </Button>
                 <Button type="button" variant="secondary" onClick={handleCancel}>
                   Cancel
                 </Button>
-              </div>
+              </FormActions>
             </form>
-          </Card>
+          </FormCard>
         )}
 
         {loading ? (
-          // <div className="text-center py-8 text-gray-600">Loading...</div>
           <SkeletonTable />
         ) : customers.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No customers found</div>
@@ -306,18 +272,10 @@ export default function CustomersPage() {
                       <td className="px-4 py-3 text-sm text-gray-600">{customer.phone || '-'}</td>
                       <td className="px-4 py-3 text-sm">
                         <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleEdit(customer)}
-                          >
+                          <Button variant="secondary" size="sm" onClick={() => handleEdit(customer)}>
                             Edit
                           </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDelete(customer.id)}
-                          >
+                          <Button variant="danger" size="sm" onClick={() => handleDelete(customer.id)}>
                             Delete
                           </Button>
                         </div>
