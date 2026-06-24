@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 import { Search, X, Loader2 } from 'lucide-react';
+import { AxiosError } from 'axios';
 
 interface Customer {
   id: string;
@@ -113,9 +114,13 @@ export default function CustomersPage() {
       setEditingId(null);
       setForm({ name: '', email: '', phone: '', address: '' });
       fetchCustomers(pagination.page);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to save customer';
-      setFormError(message);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        const message = error.response?.data?.message || 'Failed to save customer';
+        setFormError(message);
+      } else {
+        setFormError('An unexpected error occurred');
+      }
       console.error(error);
     }
   };
@@ -216,7 +221,6 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* SISANYA SAMA KAYAK SEBELUMNYA */}
         {showForm && (
           <Card className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">

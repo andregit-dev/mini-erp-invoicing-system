@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { Button } from '@/components/ui/Button';
+import { AxiosError } from 'axios';
 import { Search, X, Loader2 } from 'lucide-react';
 
 interface Invoice {
@@ -91,8 +91,12 @@ export default function InvoicesPage() {
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
       fetchInvoices(pagination.page);
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to update status');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        alert(error.response?.data?.message || 'Failed to update status');
+      } else {
+        alert('An unexpected error occurred');
+      }
     } finally {
       setUpdating(null);
     }

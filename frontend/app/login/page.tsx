@@ -4,6 +4,12 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
+import { AxiosError } from 'axios';
+
+// interface ErrorResponse {
+//   message: string;
+//   statusCode?: number;
+// }
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,8 +27,12 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/dashboard');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+    } catch (err) {
+      if (err instanceof AxiosError) {
+        setError(err.response?.data?.message || 'Login failed');
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 
@@ -74,7 +84,7 @@ export default function LoginPage() {
           </button>
 
           <p className="text-center text-sm text-gray-600">
-            Don't have account?{' '}
+            Don{`&apos;`}t have account?{' '}
             <Link href="/register" className="text-blue-600 hover:underline">
               Register
             </Link>

@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { AxiosError } from 'axios';
 
 interface Customer {
   id: string;
@@ -92,10 +93,9 @@ export default function CreateInvoicePage() {
     e.preventDefault();
     setLoading(true);
 
-    console.log('🔍 Customer ID:', form.customerId); // ← TAMBAHKAN INI
-    console.log('🔍 Items:', items);
+    // console.log('🔍 Customer ID:', form.customerId);
+    // console.log('🔍 Items:', items);
 
-    // Validasi customerId
     if (!form.customerId) {
       alert('Please select a customer');
       setLoading(false);
@@ -122,7 +122,12 @@ export default function CreateInvoicePage() {
 
       router.push('/invoices');
     } catch (error) {
-      alert('Failed to create invoice');
+      if (error instanceof AxiosError) {
+        const message = error.response?.data?.message || 'Failed to create invoice';
+        alert(message);
+      } else {
+        alert('An unexpected error occurred');
+      }
       console.error(error);
     } finally {
       setLoading(false);

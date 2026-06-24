@@ -6,6 +6,7 @@ import { api } from '@/lib/api';
 import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { AxiosError } from 'axios';
 
 interface InvoiceDetail {
   id: string;
@@ -74,8 +75,12 @@ export default function InvoiceDetailPage() {
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
       fetchInvoice();
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to update status');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        alert(error.response?.data?.message || 'Failed to update status');
+      } else {
+        alert('An unexpected error occurred');
+      }
     } finally {
       setUpdating(false);
     }
