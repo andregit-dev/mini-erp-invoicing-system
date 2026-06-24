@@ -8,12 +8,10 @@ export function middleware(request: NextRequest) {
   const publicRoutes = ['/login', '/register'];
   const isPublicRoute = publicRoutes.includes(pathname);
 
-  // Redirect to login if no token & access protected route
   if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL('/login', request.url));
   }
 
-  // Redirect to dashboard when logged in & access public route
   if (token && isPublicRoute) {
     return NextResponse.redirect(new URL('/dashboard', request.url));
   }

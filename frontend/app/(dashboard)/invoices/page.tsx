@@ -2,8 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { api } from '@/lib/api';
 import { getToken, logout } from '@/lib/auth';
+import { Button } from '@/components/ui/Button';
+import { Card } from '@/components/ui/Card';
 
 interface Invoice {
   id: string;
@@ -131,7 +134,14 @@ export default function InvoicesPage() {
                   const nextStatuses = getNextStatuses(invoice.status);
                   return (
                     <tr key={invoice.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">{invoice.invoiceNumber}</td>
+                      <td className="px-4 py-3 text-sm">
+                        <Link
+                          href={`/invoices/${invoice.id}`}
+                          className="text-blue-600 hover:underline font-medium"
+                        >
+                          {invoice.invoiceNumber}
+                        </Link>
+                      </td>
                       <td className="px-4 py-3 text-sm text-gray-600">{invoice.customer.name}</td>
                       <td className="px-4 py-3 text-sm text-gray-900">Rp {invoice.total.toLocaleString()}</td>
                       <td className="px-4 py-3">
