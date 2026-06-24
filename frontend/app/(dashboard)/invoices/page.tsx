@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Search, X, Loader2 } from 'lucide-react';
 
@@ -27,6 +27,7 @@ interface PaginationMeta {
 
 export default function InvoicesPage() {
   const router = useRouter();
+  const { checkAuth, logout } = useAuthStore();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -64,7 +65,6 @@ export default function InvoicesPage() {
     }
   };
 
-  // Debounce search: tunggu 500ms setelah user stop typing
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -75,12 +75,15 @@ export default function InvoicesPage() {
   }, [search]);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    fetchInvoices();
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
+      fetchInvoices();
+    };
+    init();
   }, [router, filter, debouncedSearch]);
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -129,6 +132,11 @@ export default function InvoicesPage() {
     setIsSearching(false);
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-6xl mx-auto">
@@ -154,7 +162,7 @@ export default function InvoicesPage() {
               + Create Invoice
             </button>
             <button
-              onClick={() => { logout(); router.push('/login'); }}
+              onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
             >
               Logout
@@ -263,7 +271,6 @@ export default function InvoicesPage() {
               </table>
             </div>
 
-            {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-between items-center mt-4">
                 <div className="text-sm text-gray-600">

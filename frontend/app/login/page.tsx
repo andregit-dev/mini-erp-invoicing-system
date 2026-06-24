@@ -3,42 +3,26 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { api } from '@/lib/api';
-import { AxiosError } from 'axios';
-
-interface ErrorResponse {
-  message: string;
-  statusCode?: number;
-}
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function LoginPage() {
   const router = useRouter();
+  const login = useAuthStore((state) => state.login);
+  const isLoading = useAuthStore((state) => state.isLoading);
+  
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
     setError('');
 
     try {
-      const res = await api.post('/auth/login', { email, password });
-      
-      localStorage.setItem('token', res.data.access_token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      
+      await login(email, password);
       router.push('/dashboard');
-    } catch (err: unknown) {
-      if (err instanceof AxiosError) {
-        const errorData = err.response?.data as ErrorResponse;
-        setError(errorData?.message || 'Login failed');
-      } else {
-        setError('An unexpected error occurred');
-      }
-    } finally {
-      setLoading(false);
+    } catch (err: any) {
+      setError(err.response?.data?.message || 'Login failed');
     }
   };
 
@@ -65,7 +49,7 @@ export default function LoginPage() {
               className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-gray-900"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
+              placeholder="admin@example.com"
             />
           </div>
 
@@ -83,10 +67,10 @@ export default function LoginPage() {
 
           <button
             type="submit"
-            disabled={loading}
+            disabled={isLoading}
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition"
           >
-            {loading ? 'Loading...' : 'Login'}
+            {isLoading ? 'Loading...' : 'Login'}
           </button>
 
           <p className="text-center text-sm text-gray-600">

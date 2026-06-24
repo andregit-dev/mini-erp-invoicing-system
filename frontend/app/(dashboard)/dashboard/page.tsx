@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken, getUser } from '@/lib/auth';
 import { Card } from '@/components/ui/Card';
 
 interface DashboardData {
@@ -20,27 +20,30 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const { user, isAuthenticated, checkAuth } = useAuthStore();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
 
-    const user = getUser();
-    if (user) {
-      setUserName(user.name || 'User');
-    }
+      try {
+        const res = await api.get('/invoices/dashboard');
+        setData(res.data);
+      } catch {
+        // Error handling
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    api.get('/invoices/dashboard')
-      .then((res) => setData(res.data))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-  }, [router]);
+    init();
+  }, [router, checkAuth]);
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;
@@ -56,7 +59,7 @@ export default function DashboardPage() {
   return (
     <div>
       <h1 className="text-2xl font-bold text-gray-900 mb-2">Dashboard</h1>
-      <p className="text-gray-600 mb-6">Welcome back, {userName}!</p>
+      <p className="text-gray-600 mb-6">Welcome back, {user?.name || 'User'}!</p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {stats.map((stat) => (

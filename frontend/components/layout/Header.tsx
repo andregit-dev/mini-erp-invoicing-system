@@ -1,27 +1,22 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { logout } from '@/lib/auth';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export function Header() {
   const router = useRouter();
+  const { user, logout } = useAuthStore();
   const [userName, setUserName] = useState('');
 
   useEffect(() => {
-    const user = localStorage.getItem('user');
     if (user) {
-      try {
-        const parsed = JSON.parse(user);
-        setUserName(parsed.name || 'User');
-      } catch {
-        setUserName('User');
-      }
+      setUserName(user.name || 'User');
     }
-  }, []);
+  }, [user]);
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     router.push('/login');
   };
 

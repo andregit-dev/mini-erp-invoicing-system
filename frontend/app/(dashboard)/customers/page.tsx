@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken, logout } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
@@ -27,6 +27,7 @@ interface PaginationMeta {
 
 export default function CustomersPage() {
   const router = useRouter();
+  const { checkAuth, logout } = useAuthStore();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -64,7 +65,6 @@ export default function CustomersPage() {
     }
   };
 
-  // Debounce search: tunggu 500ms setelah user stop typing
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -75,12 +75,15 @@ export default function CustomersPage() {
   }, [search]);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    fetchCustomers();
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
+      fetchCustomers();
+    };
+    init();
   }, [router, debouncedSearch]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -154,6 +157,11 @@ export default function CustomersPage() {
     }
   };
 
+  const handleLogout = async () => {
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto">
@@ -168,13 +176,13 @@ export default function CustomersPage() {
             }}>
               {showForm ? 'Cancel' : '+ Add Customer'}
             </Button>
-            <Button variant="secondary" onClick={() => { logout(); router.push('/login'); }}>
+            <Button variant="secondary" onClick={handleLogout}>
               Logout
             </Button>
           </div>
         </div>
 
-        {/* Search Box */}
+        {/* Search Box - SAMA KAYAK SEBELUMNYA */}
         <div className="relative mb-4 max-w-md">
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
@@ -206,11 +214,9 @@ export default function CustomersPage() {
               </div>
             )}
           </div>
-          {/* <span className="text-xs text-gray-500 mt-1 block">
-            {loading ? 'Loading...' : `Found ${pagination.total} customers`}
-          </span> */}
         </div>
 
+        {/* SISANYA SAMA KAYAK SEBELUMNYA */}
         {showForm && (
           <Card className="mb-6">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
@@ -313,7 +319,6 @@ export default function CustomersPage() {
               </table>
             </div>
 
-            {/* Pagination */}
             {pagination.totalPages > 1 && (
               <div className="flex justify-between items-center mt-4">
                 <div className="text-sm text-gray-600">
