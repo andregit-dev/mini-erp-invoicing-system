@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
@@ -27,22 +27,30 @@ export default function CustomerDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { checkAuth } = useAuthStore();
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
 
-    api.get(`/customers/${id}`)
-      .then((res) => setCustomer(res.data))
-      .catch(() => router.push('/customers'))
-      .finally(() => setLoading(false));
-  }, [id, router]);
+      try {
+        const res = await api.get(`/customers/${id}`);
+        setCustomer(res.data);
+      } catch {
+        router.push('/customers');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [id, router, checkAuth]);
 
   if (loading) {
     return <div className="text-center py-8">Loading...</div>;

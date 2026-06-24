@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
@@ -43,6 +43,7 @@ export default function InvoiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { checkAuth } = useAuthStore();
 
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
@@ -61,13 +62,16 @@ export default function InvoiceDetailPage() {
   };
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    fetchInvoice();
-  }, [id, router]);
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
+      fetchInvoice();
+    };
+    init();
+  }, [id, router, checkAuth]);
 
   const updateStatus = async (newStatus: string) => {
     if (!confirm(`Change status to ${newStatus}?`)) return;

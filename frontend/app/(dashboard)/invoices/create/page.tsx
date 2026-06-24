@@ -2,8 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
@@ -25,6 +25,7 @@ interface InvoiceItem {
 
 export default function CreateInvoicePage() {
   const router = useRouter();
+  const { checkAuth } = useAuthStore();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
@@ -37,16 +38,22 @@ export default function CreateInvoicePage() {
   ]);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
 
-    api.get('/customers')
-      .then((res) => setCustomers(res.data))
-      .catch(() => router.push('/login'));
-  }, [router]);
+      try {
+        const res = await api.get('/customers');
+        setCustomers(res.data);
+      } catch {
+        router.push('/login');
+      }
+    };
+    init();
+  }, [router, checkAuth]);
 
   const calculateItemTotal = (quantity: number, unitPrice: number) => {
     return quantity * unitPrice;
