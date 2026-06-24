@@ -69,13 +69,16 @@ export class InvoicesService {
   }
 
   async findAll(
+    userId: string,
     filters: FilterInvoiceDto,
     page: number = 1,
     limit: number = 10,
   ) {
     const skip = (page - 1) * limit;
 
-    const where: any = {};
+    const where: any = {
+      userId,
+    };
 
     if (filters.status) {
       where.status = filters.status;

@@ -40,11 +40,13 @@ export class InvoicesController {
   @ApiOperation({ summary: 'Get all invoices with filters and pagination' })
   @ApiResponse({ status: 200, description: 'List of invoices' })
   findAll(
+    @Request() req,
     @Query() filters: FilterInvoiceDto,
     @Query('page') page: string = '1',
     @Query('limit') limit: string = '10',
   ) {
     return this.invoicesService.findAll(
+      req.user.id,
       filters,
       parseInt(page, 10),
       parseInt(limit, 10),
