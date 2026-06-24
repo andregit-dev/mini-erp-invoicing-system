@@ -10,15 +10,17 @@ import {
   Request,
 } from '@nestjs/common';
 import {
-  // ApiTags,
   ApiBearerAuth,
   ApiOperation,
   ApiResponse,
+  ApiTags,
 } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+
+@ApiTags('customers')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('customers')
@@ -35,16 +37,16 @@ export class CustomersController {
   @Get()
   @ApiOperation({ summary: 'Get all customers' })
   @ApiResponse({ status: 200, description: 'List of customers' })
-  findAll() {
-    return this.customersService.findAll();
+  findAll(@Request() req) {
+    return this.customersService.findAll(req.user.id);
   }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get customer by ID' })
   @ApiResponse({ status: 200, description: 'Customer found' })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  findOne(@Param('id') id: string) {
-    return this.customersService.findOne(id);
+  findOne(@Param('id') id: string, @Request() req) {
+    return this.customersService.findOne(id, req.user.id);
   }
 
   @Patch(':id')
@@ -54,15 +56,16 @@ export class CustomersController {
   update(
     @Param('id') id: string,
     @Body() updateCustomerDto: UpdateCustomerDto,
+    @Request() req,
   ) {
-    return this.customersService.update(id, updateCustomerDto);
+    return this.customersService.update(id, updateCustomerDto, req.user.id);
   }
 
   @Delete(':id')
   @ApiOperation({ summary: 'Delete customer' })
   @ApiResponse({ status: 200, description: 'Customer deleted successfully' })
   @ApiResponse({ status: 404, description: 'Customer not found' })
-  remove(@Param('id') id: string) {
-    return this.customersService.remove(id);
+  remove(@Param('id') id: string, @Request() req) {
+    return this.customersService.remove(id, req.user.id);
   }
 }

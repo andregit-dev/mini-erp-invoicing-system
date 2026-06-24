@@ -16,17 +16,22 @@ export class CustomersService {
     });
   }
 
-  async findAll() {
+  async findAll(userId: string) {
     return this.prisma.customer.findMany({
+      where: { userId },
       orderBy: { createdAt: 'desc' },
     });
   }
 
-  async findOne(id: string) {
-    const customer = await this.prisma.customer.findUnique({
-      where: { id },
+  async findOne(id: string, userId: string) {
+    const customer = await this.prisma.customer.findFirst({
+      where: {
+        id,
+        userId,
+      },
       include: {
         invoices: {
+          where: { userId },
           orderBy: { createdAt: 'desc' },
           take: 5,
         },
@@ -40,8 +45,12 @@ export class CustomersService {
     return customer;
   }
 
-  async update(id: string, updateCustomerDto: UpdateCustomerDto) {
-    await this.findOne(id); // Check if exists
+  async update(
+    id: string,
+    updateCustomerDto: UpdateCustomerDto,
+    userId: string,
+  ) {
+    await this.findOne(id, userId);
 
     return this.prisma.customer.update({
       where: { id },
@@ -49,8 +58,8 @@ export class CustomersService {
     });
   }
 
-  async remove(id: string) {
-    await this.findOne(id); // Check if exists
+  async remove(id: string, userId: string) {
+    await this.findOne(id, userId);
 
     return this.prisma.customer.delete({
       where: { id },
