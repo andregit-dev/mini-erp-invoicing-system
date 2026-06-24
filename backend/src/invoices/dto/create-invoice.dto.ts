@@ -5,11 +5,12 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
-  IsUUID,
+  // IsUUID,
   ValidateNested,
   Min,
   IsInt,
   IsNumber,
+  Matches,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
@@ -43,9 +44,11 @@ export class CreateInvoiceDto {
   @IsString()
   note?: string;
 
-  @ApiProperty({ example: 'clx123...' })
+  @ApiProperty({ example: 'cmqrtn6l60001i0dbx0kcge2d' })
   @IsNotEmpty()
-  @IsUUID()
+  @Matches(/^[a-z0-9]+$/, {
+    message: 'customerId must be alphanumeric (lowercase a-z and 0-9)',
+  })
   customerId: string;
 
   @ApiProperty({ type: [InvoiceItemDto] })

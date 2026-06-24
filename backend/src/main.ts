@@ -8,10 +8,12 @@ async function bootstrap() {
   // CORS biar frontend bisa akses
   app.enableCors();
   // Global validation
-  app.useGlobalPipes(new ValidationPipe({
-    whitelist: true,
-    transform: true,
-  }));
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      transform: true,
+    }),
+  );
 
   // Swagger setup
   const config = new DocumentBuilder()

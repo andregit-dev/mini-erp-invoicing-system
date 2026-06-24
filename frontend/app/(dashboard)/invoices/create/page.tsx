@@ -92,6 +92,10 @@ export default function CreateInvoicePage() {
     e.preventDefault();
     setLoading(true);
 
+    console.log('🔍 Customer ID:', form.customerId); // ← TAMBAHKAN INI
+    console.log('🔍 Items:', items);
+
+    // Validasi customerId
     if (!form.customerId) {
       alert('Please select a customer');
       setLoading(false);
