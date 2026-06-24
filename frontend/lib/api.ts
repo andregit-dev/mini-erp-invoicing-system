@@ -1,6 +1,6 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const api = axios.create({
   baseURL: API_URL,
@@ -10,14 +10,16 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// Interceptor: handle 401 (token expired)
+interface ErrorResponse {
+  message: string;
+  statusCode?: number;
+}
+
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: AxiosError<ErrorResponse>) => {
     if (error.response?.status === 401) {
       if (typeof window !== 'undefined') {
-        // 🔥 HAPUS LOCALSTORAGE
-        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }

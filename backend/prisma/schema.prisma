@@ -1,11 +1,12 @@
 generator client {
   provider = "prisma-client"
-  output   = "../generated/prisma"
+  output   = "./generated/prisma"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "debian-openssl-1.1.x"]
 }
 
 datasource db {
   provider = "sqlite"
-  url      = env("DATABASE_URL") // ← UNCOMMENT INI!
+  url      = env("DATABASE_URL")
 }
 
 model User {
@@ -13,10 +14,12 @@ model User {
   email     String     @unique
   password  String
   name      String?
-  customers Customer[]
-  invoices  Invoice[]
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
+  customers Customer[]
+  invoices  Invoice[]
+
+  @@index([email])
 }
 
 model Customer {
@@ -26,10 +29,15 @@ model Customer {
   phone     String?
   address   String?
   userId    String?
-  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
-  invoices  Invoice[] // ← TAMBAHKAN INI!
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
+  user      User?     @relation(fields: [userId], references: [id])
+  invoices  Invoice[]
+
+  @@index([userId])
+  @@index([email])
+  @@index([name])
 }
 
 model Invoice {
@@ -42,12 +50,18 @@ model Invoice {
   dueDate       DateTime
   note          String?
   customerId    String
-  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
   userId        String?
-  user          User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
-  items         InvoiceItem[]
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
+  user          User?         @relation(fields: [userId], references: [id])
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  items         InvoiceItem[]
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([createdAt])
+  @@index([customerId])
+  @@index([userId])
 }
 
 model InvoiceItem {
@@ -57,9 +71,11 @@ model InvoiceItem {
   unitPrice   Float
   total       Float
   invoiceId   String
-  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  @@index([invoiceId])
 }
 
 enum InvoiceStatus {

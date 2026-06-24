@@ -3,12 +3,21 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, Download, User, UserPlus, Save, X, Loader2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
+import { SkeletonTable } from '@/components/ui/Skeleton';
+import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
+import { FormField, FormActions } from '@/components/ui/Form';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { Modal } from '@/components/ui/Modal';
+import { CSVLink } from 'react-csv';
 
 interface Customer {
   id: string;
@@ -27,29 +36,40 @@ interface PaginationMeta {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { checkAuth, logout } = useAuthStore();
+  const { checkAuth } = useAuthStore();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
     page: 1,
     limit: 10,
     totalPages: 0,
   });
-  const [showForm, setShowForm] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', address: '' });
-  const [formError, setFormError] = useState('');
+
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+    setValue,
+  } = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: { name: '', email: '', phone: '', address: '' },
+  });
 
   const fetchCustomers = async (page: number = 1) => {
     setLoading(true);
     setIsSearching(false);
     try {
       const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : '';
-      const url = `/customers?page=${page}&limit=10${searchParam}`;
+      const url = `/customers?page=${page}&limit=10${searchParam}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       const res = await api.get(url);
       
       if (res.data && res.data.data) {
@@ -70,7 +90,6 @@ export default function CustomersPage() {
       setDebouncedSearch(search);
       setIsSearching(false);
     }, 500);
-
     return () => clearTimeout(timer);
   }, [search]);
 
@@ -84,59 +103,68 @@ export default function CustomersPage() {
       fetchCustomers();
     };
     init();
-  }, [router, debouncedSearch]);
+  }, [router, debouncedSearch, sortBy, sortOrder]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setFormError('');
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
 
-    if (!form.name.trim()) {
-      setFormError('Name is required');
-      return;
-    }
-    if (!form.email.trim()) {
-      setFormError('Email is required');
-      return;
-    }
-    if (!form.email.includes('@')) {
-      setFormError('Invalid email format');
-      return;
-    }
+  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
+    <th
+      className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600 transition select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === field ? (
+          sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />
+        ) : (
+          <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+        )}
+      </div>
+    </th>
+  );
 
+  const onSubmit = async (data: CustomerFormData) => {
     try {
       if (editingId) {
-        await api.patch(`/customers/${editingId}`, form);
+        await api.patch(`/customers/${editingId}`, data);
+        toast.success('Customer updated successfully!');
       } else {
-        await api.post('/customers', form);
+        await api.post('/customers', data);
+        toast.success('Customer created successfully!');
       }
-      setShowForm(false);
+      setIsModalOpen(false);
       setEditingId(null);
-      setForm({ name: '', email: '', phone: '', address: '' });
+      reset();
       fetchCustomers(pagination.page);
-    } catch (error: any) {
-      const message = error.response?.data?.message || 'Failed to save customer';
-      setFormError(message);
-      console.error(error);
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.message || 'Failed to save customer');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     }
   };
 
   const handleEdit = (customer: Customer) => {
     setEditingId(customer.id);
-    setForm({
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone || '',
-      address: customer.address || '',
-    });
-    setShowForm(true);
-    setFormError('');
+    setValue('name', customer.name);
+    setValue('email', customer.email);
+    setValue('phone', customer.phone || '');
+    setValue('address', customer.address || '');
+    setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
     setEditingId(null);
-    setForm({ name: '', email: '', phone: '', address: '' });
-    setFormError('');
+    reset();
   };
 
   const handleDelete = async (id: string) => {
@@ -145,8 +173,7 @@ export default function CustomersPage() {
         await api.delete(`/customers/${id}`);
         fetchCustomers(pagination.page);
       } catch (error) {
-        alert('Failed to delete customer');
-        console.error(error);
+        toast.error('Failed to delete customer');
       }
     }
   };
@@ -157,35 +184,28 @@ export default function CustomersPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
-
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <div className="flex gap-2">
-            <Button onClick={() => {
+          <Button
+            onClick={() => {
               setEditingId(null);
-              setForm({ name: '', email: '', phone: '', address: '' });
-              setFormError('');
-              setShowForm(!showForm);
-            }}>
-              {showForm ? 'Cancel' : '+ Add Customer'}
-            </Button>
-            <Button variant="secondary" onClick={handleLogout}>
-              Logout
-            </Button>
-          </div>
+              reset();
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-1"
+          >
+            <Plus className="w-4 h-4" />
+            Add Customer
+          </Button>
         </div>
 
-        {/* Search Box - SAMA KAYAK SEBELUMNYA */}
-        <div className="relative mb-4 max-w-md">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          {/* Search Box */}
+          <div className="relative flex-1 max-w-md min-w-[200px]">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
@@ -214,122 +234,133 @@ export default function CustomersPage() {
               </div>
             )}
           </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Export CSV */}
+            {customers.length > 0 && (
+              <CSVLink
+                data={customers.map((c) => ({
+                  Name: c.name,
+                  Email: c.email,
+                  Phone: c.phone || '-',
+                  Address: c.address || '-',
+                }))}
+                filename={`customers-${new Date().toISOString().split('T')[0]}.csv`}
+                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </CSVLink>
+            )}
+
+            {/* Additional Button */}
+          </div>
         </div>
 
-        {/* SISANYA SAMA KAYAK SEBELUMNYA */}
-        {showForm && (
-          <Card className="mb-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingId ? 'Edit Customer' : 'Add New Customer'}
-            </h2>
+        {/* Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          title={editingId ? 'Edit Customer' : 'Add New Customer'}
+        >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
+            <FormField label="Name" error={errors.name?.message} required>
+              <Input {...register('name')} placeholder="Customer name" />
+            </FormField>
             
-            {formError && (
-              <div className="bg-red-50 text-red-600 p-3 rounded-md mb-4 text-sm">
-                {formError}
-              </div>
-            )}
+            <FormField label="Email" error={errors.email?.message} required>
+              <Input {...register('email')} placeholder="customer@example.com" />
+            </FormField>
             
-            <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Input
-                label="Name"
-                required
-                value={form.name}
-                onChange={(e) => setForm({ ...form, name: e.target.value })}
-                placeholder="Customer name"
-              />
-              <Input
-                label="Email"
-                type="email"
-                required
-                value={form.email}
-                onChange={(e) => setForm({ ...form, email: e.target.value })}
-                placeholder="customer@example.com"
-              />
-              <Input
-                label="Phone"
-                value={form.phone}
-                onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                placeholder="Phone number"
-              />
-              <Input
-                label="Address"
-                value={form.address}
-                onChange={(e) => setForm({ ...form, address: e.target.value })}
+            <FormField label="Phone" error={errors.phone?.message}>
+              <Input {...register('phone')} placeholder="Phone number" />
+            </FormField>
+            
+            <FormField label="Address" error={errors.address?.message}>
+              <textarea
+                {...register('address')}
                 placeholder="Address"
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
               />
-              <div className="md:col-span-2 flex gap-2">
-                <Button type="submit">
-                  {editingId ? 'Update' : 'Save'}
-                </Button>
-                <Button type="button" variant="secondary" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </Card>
-        )}
+            </FormField>
+            
+            <FormActions>
+              <Button type="submit" loading={isSubmitting}>
+                {editingId ? 'Update' : 'Save'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={handleCloseModal}>
+                Cancel
+              </Button>
+            </FormActions>
+          </form>
+        </Modal>
 
+        {/* Table */}
         {loading ? (
-          <div className="text-center py-8 text-gray-600">Loading...</div>
+          <SkeletonTable />
         ) : customers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No customers found</div>
+          <EmptyState
+            title={search ? `No customers found for "${search}"` : 'No customers yet'}
+            description={search ? 'Try adjusting your search or clear the filter' : 'Add your first customer to get started'}
+            icon={search ? 'search' : 'empty'}
+            searchQuery={search || undefined}
+            onClearSearch={search ? () => {
+              setSearch('');
+              setDebouncedSearch('');
+            } : undefined}
+          />
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customers.map((customer) => (
-                    <tr key={customer.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">
-                        <Link href={`/customers/${customer.id}`} className="text-blue-600 hover:underline">
-                          {customer.name}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{customer.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{customer.phone || '-'}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex gap-2">
-                          <Button
-                            variant="secondary"
-                            size="sm"
-                            onClick={() => handleEdit(customer)}
-                          >
-                            Edit
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
-                            onClick={() => handleDelete(customer.id)}
-                          >
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <SortableHeader field="name" label="Name" />
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+                      <SortableHeader field="phone" label="Phone" />
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {customers.map((customer) => (
+                      <tr key={customer.id} className="border-t border-gray-100 hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm">
+                          <Link href={`/customers/${customer.id}`} className="text-blue-600 hover:underline">
+                            {customer.name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{customer.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{customer.phone || '-'}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex gap-2">
+                            <Button variant="secondary" size="sm" onClick={() => handleEdit(customer)}>
+                              Edit
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDelete(customer.id)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {pagination.totalPages > 1 && (
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                <div className="text-sm text-gray-600 order-2 sm:order-1">
                   Showing {(pagination.page - 1) * pagination.limit + 1} -{' '}
                   {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1 order-1 sm:order-2">
                   <button
                     onClick={() => goToPage(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                   >
                     Previous
                   </button>
@@ -339,7 +370,7 @@ export default function CustomersPage() {
                   <button
                     onClick={() => goToPage(pagination.page + 1)}
                     disabled={pagination.page >= pagination.totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                   >
                     Next
                   </button>

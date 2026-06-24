@@ -26,8 +26,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     try {
       const res = await api.post('/auth/login', { email, password });
       
-      // 🔥 TOKEN ADA DI COOKIE (HttpOnly)
-      // Kita cuma simpan user di store (bukan localStorage)
       set({
         user: res.data.user,
         isAuthenticated: true,

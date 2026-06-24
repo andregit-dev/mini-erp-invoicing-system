@@ -1,6 +1,22 @@
 import { plainToClass } from 'class-transformer';
-import { IsString, IsNotEmpty, validateSync } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, validateSync } from 'class-validator';
 import { Logger } from '@nestjs/common';
+
+/**
+ * Standard NODE_ENV values (follows Node.js convention):
+ * - development: Local development
+ * - production: Production environment
+ * - test: Testing environment
+ * - staging: Staging/QA environment (optional)
+ *
+ * Defaults to 'development' if not set
+ */
+export enum NodeEnv {
+  DEVELOPMENT = 'development',
+  STAGING = 'staging',
+  PRODUCTION = 'production',
+  TEST = 'test',
+}
 
 class EnvironmentVariables {
   @IsString()
@@ -11,8 +27,10 @@ class EnvironmentVariables {
   @IsNotEmpty()
   JWT_SECRET: string;
 
-  @IsString()
-  NODE_ENV: string = 'development';
+  @IsEnum(NodeEnv, {
+    message: `NODE_ENV must be one of: ${Object.values(NodeEnv).join(', ')}`,
+  })
+  NODE_ENV: NodeEnv = NodeEnv.DEVELOPMENT;
 }
 
 const logger = new Logger('EnvironmentValidation');
@@ -32,6 +50,6 @@ export function validateEnvironment() {
     );
   }
 
-  logger.log('✅ Environment variables validated successfully');
+  logger.log(`✅ Environment: ${config.NODE_ENV}`);
   return config;
 }

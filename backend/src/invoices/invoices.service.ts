@@ -7,75 +7,107 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { FilterInvoiceDto } from './dto/filter-invoice.dto';
-import { InvoiceStatus } from '../../generated/prisma/enums';
+import { InvoiceStatus } from '../../prisma/generated/prisma/enums';
 
 @Injectable()
 export class InvoicesService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateInvoiceDto) {
-    // Cek customer exists
-    const customer = await this.prisma.customer.findUnique({
-      where: { id: dto.customerId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const customer = await tx.customer.findUnique({
+        where: { id: dto.customerId },
+      });
 
-    if (!customer) {
-      throw new NotFoundException('Customer not found');
-    }
+      if (!customer) {
+        throw new NotFoundException('Customer not found');
+      }
 
-    // Hitung subtotal, tax, total
-    const subtotal = dto.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
-    const tax = subtotal * 0.11; // 11% PPN
-    const total = subtotal + tax;
+      const subtotal = dto.items.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0,
+      );
+      const tax = subtotal * 0.11;
+      const total = subtotal + tax;
 
-    // Generate invoice number
-    const invoiceNumber = `INV-${Date.now()}`;
+      const invoiceNumber = await this.generateInvoiceNumber();
 
-    // Create invoice with items
-    return this.prisma.invoice.create({
-      data: {
-        invoiceNumber,
-        dueDate: new Date(dto.dueDate),
-        subtotal,
-        tax,
-        total,
-        note: dto.note,
-        customerId: dto.customerId,
-        userId,
-        items: {
-          create: dto.items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.quantity * item.unitPrice,
-          })),
-        },
-      },
-      include: {
-        customer: true,
-        items: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+      return tx.invoice.create({
+        data: {
+          invoiceNumber,
+          dueDate: new Date(dto.dueDate),
+          subtotal,
+          tax,
+          total,
+          note: dto.note,
+          customerId: dto.customerId,
+          userId,
+          items: {
+            create: dto.items.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.quantity * item.unitPrice,
+            })),
           },
         },
-      },
+        include: {
+          customer: true,
+          items: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
     });
   }
 
-  async findAll(
-    userId: string,
-    filters: FilterInvoiceDto,
-    page: number = 1,
-    limit: number = 10,
-    search?: string,
-  ) {
-    const skip = (page - 1) * limit;
+  async generateInvoiceNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const datePrefix = `${year}${month}${day}`; // YYYYMMDD
+
+    const lastInvoice = await this.prisma.invoice.findFirst({
+      where: {
+        invoiceNumber: {
+          startsWith: `INV-${datePrefix}`,
+        },
+      },
+      orderBy: {
+        invoiceNumber: 'desc',
+      },
+    });
+
+    let sequence = 1;
+    if (lastInvoice) {
+      const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+      sequence = lastNumber + 1;
+    }
+
+    return `INV-${datePrefix}-${String(sequence).padStart(4, '0')}`;
+  }
+
+  async findAll(userId: string, filters: FilterInvoiceDto) {
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+
+    if (filters.startDate && filters.endDate) {
+      const start = new Date(filters.startDate);
+      const end = new Date(filters.endDate);
+      if (start > end) {
+        throw new BadRequestException(
+          'startDate cannot be greater than endDate',
+        );
+      }
+    }
+
+    const skip = (filters.page - 1) * filters.limit;
 
     const where: any = {
       userId,
@@ -86,26 +118,38 @@ export class InvoicesService {
       where.status = filters.status;
     }
 
-    // Filter by date range
+    // Filter by date range (dueDate)
     if (filters.startDate || filters.endDate) {
-      where.createdAt = {};
+      where.dueDate = {};
       if (filters.startDate) {
-        where.createdAt.gte = new Date(filters.startDate);
+        where.dueDate.gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        where.createdAt.lte = new Date(filters.endDate);
+        where.dueDate.lte = new Date(filters.endDate);
       }
     }
 
-    if (search) {
+    if (filters.search) {
       where.OR = [
-        { invoiceNumber: { contains: search } },
+        { invoiceNumber: { contains: filters.search } },
         {
           customer: {
-            name: { contains: search },
+            name: { contains: filters.search },
           },
         },
       ];
+    }
+
+    const sortBy = filters.sortBy || 'createdAt';
+    const sortOrder = filters.sortOrder || 'desc';
+
+    const orderBy: any = {};
+    if (sortBy === 'customer') {
+      orderBy.customer = { name: sortOrder };
+    } else if (['invoiceNumber', 'status', 'dueDate', 'createdAt', 'total'].includes(sortBy)) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      orderBy.createdAt = 'desc';
     }
 
     const [data, total] = await Promise.all([
@@ -122,7 +166,7 @@ export class InvoicesService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

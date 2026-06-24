@@ -1,0 +1,34 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mini-erp-backend-local
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    volumes:
+      - ./backend/prisma:/app/prisma
+    networks:
+      - mini-erp-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.local
+    container_name: mini-erp-frontend-local
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./frontend/.env.local
+    depends_on:
+      - backend
+    networks:
+      - mini-erp-network
+
+networks:
+  mini-erp-network:
+    driver: bridge

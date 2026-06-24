@@ -11,10 +11,27 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
-  // CORS
+  app.setGlobalPrefix('api');
+
+  const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3001'];
+
   app.enableCors({
-    origin: 'http://localhost:3001',
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, postman)
+      if (!origin) {
+        callback(null, true);
+        return;
+      }
+
+      if (allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error(`Origin ${origin} not allowed by CORS`));
+      }
+    },
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Cookie'],
   });
 
   // Global Validation Pipe
@@ -47,8 +64,13 @@ async function bootstrap() {
     },
   });
 
+  // app.use('/api/docs-json', (req, res) => {
+  //   res.json(document);
+  // });
+
   await app.listen(3000);
   console.log(`🚀 Server running on http://localhost:3000`);
   console.log(`📚 Swagger: http://localhost:3000/api/docs`);
+  console.log(`📄 Swagger JSON: http://localhost:3000/api/docs-json`);
 }
 bootstrap();

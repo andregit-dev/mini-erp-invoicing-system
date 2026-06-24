@@ -1,0 +1,30 @@
+services:
+  backend:
+    image: andreaswidj/mini-erp-backend:v0.1.0
+    container_name: mini-erp-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env
+    volumes:
+      - ./data:/app/data
+    networks:
+      - mini-erp-network
+
+  frontend:
+    image: andreaswidj/mini-erp-frontend:v0.1.1
+    container_name: mini-erp-frontend
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - .env
+    depends_on:
+      - backend
+    networks:
+      - mini-erp-network
+
+networks:
+  mini-erp-network:
+    driver: bridge

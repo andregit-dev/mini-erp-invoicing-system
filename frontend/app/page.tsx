@@ -2,19 +2,27 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getToken } from '@/lib/auth';
+import { useAuthStore } from '@/lib/store/authStore';
 
 export default function HomePage() {
   const router = useRouter();
+  const { checkAuth } = useAuthStore();
 
   useEffect(() => {
-    const token = getToken();
-    if (token) {
-      router.push('/dashboard');
-    } else {
-      router.push('/login');
-    }
-  }, [router]);
+    const init = async () => {
+      const valid = await checkAuth();
+      if (valid) {
+        router.push('/dashboard');
+      } else {
+        router.push('/login');
+      }
+    };
+    init();
+  }, [router, checkAuth]);
 
-  return null;
+  return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="text-gray-600">Loading...</div>
+    </div>
+  );
 }

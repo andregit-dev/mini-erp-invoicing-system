@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Card } from '@/components/ui/Card';
+import { SkeletonStats } from '@/components/ui/Skeleton';
 
 interface DashboardData {
   totalInvoices: number;
@@ -46,7 +47,8 @@ export default function DashboardPage() {
   }, [router, checkAuth]);
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    // return <div className="text-center py-8">Loading...</div>;
+    return <SkeletonStats />;
   }
 
   const stats = [

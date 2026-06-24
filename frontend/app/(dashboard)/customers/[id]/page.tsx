@@ -3,10 +3,12 @@
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
+import { ArrowLeft } from 'lucide-react';
 
 interface CustomerDetail {
   id: string;
@@ -27,25 +29,42 @@ export default function CustomerDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { checkAuth } = useAuthStore();
 
   const [customer, setCustomer] = useState<CustomerDetail | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
 
-    api.get(`/customers/${id}`)
-      .then((res) => setCustomer(res.data))
-      .catch(() => router.push('/customers'))
-      .finally(() => setLoading(false));
-  }, [id, router]);
+      try {
+        const res = await api.get(`/customers/${id}`);
+        setCustomer(res.data);
+      } catch {
+        router.push('/customers');
+      } finally {
+        setLoading(false);
+      }
+    };
+    init();
+  }, [id, router, checkAuth]);
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <SkeletonCard /> {/* Kotak kartu 1 */}
+        <div>
+          <SkeletonCard /> {/* Kotak kartu 2 */}
+          <SkeletonText /> {/* Baris teks di bawah kartu 2 */}
+        </div>
+      </div>
+    );
   }
 
   if (!customer) {
@@ -56,8 +75,9 @@ export default function CustomerDetailPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
-        <Button variant="secondary" onClick={() => router.push('/customers')}>
-          ← Back
+        <Button variant="secondary" onClick={() => router.push('/customers')} className="flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </Button>
       </div>
 

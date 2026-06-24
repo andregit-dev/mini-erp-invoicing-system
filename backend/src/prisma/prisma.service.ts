@@ -1,10 +1,6 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-import { PrismaClient } from '../../generated/prisma/client';
-import * as dotenv from 'dotenv';
+import { PrismaClient } from '../../prisma/generated/prisma/client';
 import * as path from 'path';
-
-// Load .env dari root
-dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
 @Injectable()
 export class PrismaService
@@ -12,9 +8,16 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   constructor() {
-    const databaseUrl = process.env.DATABASE_URL;
-    console.log('🔍 DATABASE_URL:', databaseUrl);
-    console.log('📁 Current directory:', process.cwd());
+    let databaseUrl = process.env.DATABASE_URL;
+    console.log('* DATABASE_URL:', databaseUrl);
+    console.log('* Current directory:', process.cwd());
+
+    if (databaseUrl && databaseUrl.startsWith('file:./')) {
+      const relativePath = databaseUrl.replace('file:./', '');
+      const absolutePath = path.join(process.cwd(), 'prisma', relativePath);
+      databaseUrl = `file:${absolutePath}`;
+      console.log('* Resolved DATABASE_URL:', databaseUrl);
+    }
 
     super({
       datasources: {
@@ -27,7 +30,9 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    console.log('✅ Database connected!');
+    console.log('');
+    console.log('Database connected!');
+    console.log('');
   }
 
   async onModuleDestroy() {

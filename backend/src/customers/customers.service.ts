@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { FilterCustomerDto, CustomerSortField, SortOrder } from './dto/filter-customer.dto';
 
 @Injectable()
 export class CustomersService {
@@ -16,30 +17,34 @@ export class CustomersService {
     });
   }
 
-  async findAll(
-    userId: string,
-    search?: string,
-    page: number = 1,
-    limit: number = 10,
-  ) {
+  async findAll(userId: string, filters: FilterCustomerDto) {
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
     const skip = (page - 1) * limit;
+    const sortBy = filters.sortBy || CustomerSortField.CREATED_AT;
+    const sortOrder = filters.sortOrder || SortOrder.DESC;
 
-    const where: any = {
-      userId,
-    };
+    const where: any = { userId, deletedAt: null };
 
-    if (search) {
+    if (filters.search) {
       where.OR = [
-        { name: { contains: search } },
-        { email: { contains: search } },
-        { phone: { contains: search } },
+        { name: { contains: filters.search } },
+        { email: { contains: filters.search } },
+        { phone: { contains: filters.search } },
       ];
+    }
+
+    const orderBy: any = {};
+    if (['name', 'email', 'phone', 'createdAt'].includes(sortBy)) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      orderBy.createdAt = 'desc';
     }
 
     const [data, total] = await Promise.all([
       this.prisma.customer.findMany({
         where,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),
@@ -62,6 +67,7 @@ export class CustomersService {
       where: {
         id,
         userId,
+        deletedAt: null,
       },
       include: {
         invoices: {
@@ -95,8 +101,11 @@ export class CustomersService {
   async remove(id: string, userId: string) {
     await this.findOne(id, userId);
 
-    return this.prisma.customer.delete({
+    return this.prisma.customer.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   }
 }

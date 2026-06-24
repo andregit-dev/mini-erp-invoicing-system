@@ -2,10 +2,18 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
-import { getToken } from '@/lib/auth';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { AxiosError } from 'axios';
+import { toast } from 'sonner';
+import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
+import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
+import { ChevronDown, Send, ArrowLeft } from 'lucide-react';
+import { generateInvoicePDF } from '@/lib/pdf-generator';
+import { FileText } from 'lucide-react';
+import { formatDate } from '@/lib/format';
 
 interface InvoiceDetail {
   id: string;
@@ -41,17 +49,19 @@ export default function InvoiceDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id as string;
+  const { checkAuth } = useAuthStore();
 
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('');
 
   const fetchInvoice = async () => {
     try {
       const res = await api.get(`/invoices/${id}`);
       setInvoice(res.data);
     } catch (error) {
-      alert('Invoice not found');
+      toast.error('Invoice not found');
       router.push('/invoices');
     } finally {
       setLoading(false);
@@ -59,37 +69,40 @@ export default function InvoiceDetailPage() {
   };
 
   useEffect(() => {
-    const token = getToken();
-    if (!token) {
-      router.push('/login');
-      return;
-    }
-    fetchInvoice();
-  }, [id, router]);
+    const init = async () => {
+      const valid = await checkAuth();
+      if (!valid) {
+        router.push('/login');
+        return;
+      }
+      fetchInvoice();
+    };
+    init();
+  }, [id, router, checkAuth]);
 
   const updateStatus = async (newStatus: string) => {
-    if (!confirm(`Change status to ${newStatus}?`)) return;
+    if (!newStatus) return;
+    
+    if (!invoice) return;
+    if (!confirm(`Are you sure you want to change status to "${newStatus}" for invoice #${invoice.invoiceNumber}?`)) {
+      return;
+    }
 
     setUpdating(true);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
+      toast.success(`Status updated to ${newStatus}`);
+      setSelectedStatus('');
       fetchInvoice();
-    } catch (error: any) {
-      alert(error.response?.data?.message || 'Failed to update status');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.message || 'Failed to update status');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
     } finally {
       setUpdating(false);
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      DRAFT: 'bg-gray-200 text-gray-800',
-      SENT: 'bg-blue-200 text-blue-800',
-      PAID: 'bg-green-200 text-green-800',
-      OVERDUE: 'bg-red-200 text-red-800',
-      CANCELLED: 'bg-gray-200 text-gray-800',
-    };
-    return colors[status] || 'bg-gray-200 text-gray-800';
   };
 
   const getNextStatuses = (currentStatus: string): string[] => {
@@ -105,8 +118,13 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-gray-600">Loading...</div>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <SkeletonCard />
+        <div>
+          <SkeletonCard />
+          <SkeletonText />
+        </div>
       </div>
     );
   }
@@ -120,45 +138,104 @@ export default function InvoiceDetailPage() {
   }
 
   const nextStatuses = getNextStatuses(invoice.status);
+  const isDraft = invoice.status === 'DRAFT';
+  
+  const handleDownloadPDF = () => {
+    if (!invoice) return;
+    
+    generateInvoicePDF({
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      createdAt: invoice.createdAt,
+      dueDate: invoice.dueDate,
+      note: invoice.note,
+      customer: invoice.customer,
+      items: invoice.items,
+      subtotal: invoice.subtotal,
+      tax: invoice.tax,
+      total: invoice.total,
+      user: invoice.user,
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Invoice #{invoice.invoiceNumber}
           </h1>
           <p className="text-sm text-gray-500">
-            Created: {new Date(invoice.createdAt).toLocaleDateString('id-ID')}
+            Created: {formatDate(invoice.createdAt)}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => router.push('/invoices')}>
-          ← Back
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => router.push('/invoices')} className="flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <Button variant="secondary" onClick={handleDownloadPDF} className="flex items-center gap-1">
+            <FileText className="w-4 h-4" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {/* Status Section */}
       <Card className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Status:</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(invoice.status)}`}>
-              {invoice.status}
-            </span>
+            <StatusBadge status={invoice.status as Status} showDot showIcon />
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {nextStatuses.length > 0 ? (
-              nextStatuses.map((status) => (
-                <Button
-                  key={status}
-                  variant="primary"
-                  size="sm"
-                  loading={updating}
-                  onClick={() => updateStatus(status)}
-                >
-                  Mark as {status}
-                </Button>
-              ))
+              <>
+                {isDraft ? (
+                  <Button
+                    size="sm"
+                    onClick={() => updateStatus('SENT')}
+                    loading={updating}
+                    className="flex items-center gap-1 w-full sm:w-auto justify-center"
+                  >
+                    <Send className="w-4 h-4" />
+                    Mark as Sent
+                  </Button>
+                ) : (
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => {
+                        const newStatus = e.target.value;
+                        if (!newStatus) return;
+                        // setSelectedStatus(newStatus)
+                        updateStatus(newStatus);
+                        setTimeout(() => {
+                          setSelectedStatus('');
+                        }, 1500);
+                      }}
+                      disabled={updating}
+                      className="w-full sm:w-auto pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
+                    >
+                      <option value="">Update status</option>
+                      {nextStatuses.map((status) => {
+                        const dots: Record<string, string> = {
+                          PAID: '🟢',
+                          OVERDUE: '🔴',
+                          CANCELLED: '⚫',
+                        };
+                        return (
+                          <option key={status} value={status}>
+                            {dots[status] || '●'} {status}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                )}
+              </>
             ) : (
               <span className="text-sm text-gray-400">No more status updates</span>
             )}
@@ -188,7 +265,7 @@ export default function InvoiceDetailPage() {
           </div>
           <div>
             <p className="text-sm text-gray-500">Due Date</p>
-            <p className="text-gray-900">{new Date(invoice.dueDate).toLocaleDateString('id-ID')}</p>
+            <p className="text-gray-900">{formatDate(invoice.dueDate)}</p>
           </div>
           {invoice.note && (
             <div className="col-span-2">
@@ -256,7 +333,6 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Created By */}
       <div className="text-sm text-gray-500 text-right">
         Created by: {invoice.user?.name || 'Unknown'} ({invoice.user?.email || ''})
       </div>
