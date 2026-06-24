@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
 
 interface InvoiceDetail {
   id: string;
@@ -116,8 +117,13 @@ export default function InvoiceDetailPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-gray-600">Loading...</div>
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <SkeletonCard /> {/* Kotak kartu 1 */}
+        <div>
+          <SkeletonCard /> {/* Kotak kartu 2 */}
+          <SkeletonText /> {/* Baris teks di bawah kartu 2 */}
+        </div>
       </div>
     );
   }

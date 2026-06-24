@@ -7,6 +7,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
 
 interface CustomerDetail {
   id: string;
@@ -53,7 +54,16 @@ export default function CustomerDetailPage() {
   }, [id, router, checkAuth]);
 
   if (loading) {
-    return <div className="text-center py-8">Loading...</div>;
+    return (
+      <div className="space-y-6">
+        <Skeleton className="h-10 w-48" />
+        <SkeletonCard /> {/* Kotak kartu 1 */}
+        <div>
+          <SkeletonCard /> {/* Kotak kartu 2 */}
+          <SkeletonText /> {/* Baris teks di bawah kartu 2 */}
+        </div>
+      </div>
+    );
   }
 
   if (!customer) {

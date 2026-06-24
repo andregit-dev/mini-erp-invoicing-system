@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { SkeletonForm } from '@/components/ui/Skeleton';
 
 interface Customer {
   id: string;
@@ -36,24 +37,31 @@ export default function CreateInvoicePage() {
   const [items, setItems] = useState<InvoiceItem[]>([
     { id: '1', description: '', quantity: 1, unitPrice: 0, total: 0 },
   ]);
+  const [pageLoading, setPageLoading] = useState(true);
 
   useEffect(() => {
     const init = async () => {
+      setPageLoading(true);
       const valid = await checkAuth();
       if (!valid) {
         router.push('/login');
         return;
       }
-
       try {
         const res = await api.get('/customers');
-        setCustomers(res.data);
+        setCustomers(res.data?.data || []);
       } catch {
         router.push('/login');
+      } finally {
+        setPageLoading(false);
       }
     };
     init();
   }, [router, checkAuth]);
+
+  if (pageLoading) {
+    return <SkeletonForm />;
+  }
 
   const calculateItemTotal = (quantity: number, unitPrice: number) => {
     return quantity * unitPrice;

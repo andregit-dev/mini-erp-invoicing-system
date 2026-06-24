@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/Card';
 import { Search, X, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 interface Customer {
   id: string;
@@ -277,7 +278,8 @@ export default function CustomersPage() {
         )}
 
         {loading ? (
-          <div className="text-center py-8 text-gray-600">Loading...</div>
+          // <div className="text-center py-8 text-gray-600">Loading...</div>
+          <SkeletonTable />
         ) : customers.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No customers found</div>
         ) : (

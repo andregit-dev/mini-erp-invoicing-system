@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { AxiosError } from 'axios';
 import { Search, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
+import { SkeletonTable } from '@/components/ui/Skeleton';
 
 interface Invoice {
   id: string;
@@ -210,7 +211,8 @@ export default function InvoicesPage() {
         </div>
 
         {loading ? (
-          <div className="text-center py-8 text-gray-600">Loading...</div>
+          // <div className="text-center py-8 text-gray-600">Loading...</div>
+          <SkeletonTable />
         ) : invoices.length === 0 ? (
           <div className="text-center py-8 text-gray-500">No invoices found</div>
         ) : (
