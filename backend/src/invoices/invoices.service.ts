@@ -28,11 +28,12 @@ export class InvoicesService {
       (sum, item) => sum + item.quantity * item.unitPrice,
       0,
     );
-    const tax = subtotal * 0.11; // 11% PPN
+    const tax = subtotal * 0.11;
     const total = subtotal + tax;
 
-    // Generate invoice number
-    const invoiceNumber = `INV-${Date.now()}`;
+    const timestamp = Date.now().toString().slice(-8);
+    const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+    const invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
 
     // Create invoice with items
     return this.prisma.invoice.create({

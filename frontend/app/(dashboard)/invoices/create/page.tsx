@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonForm } from '@/components/ui/Skeleton';
+import Select from 'react-select';
 
 interface Customer {
   id: string;
@@ -38,6 +39,13 @@ export default function CreateInvoicePage() {
     { id: '1', description: '', quantity: 1, unitPrice: 0, total: 0 },
   ]);
   const [pageLoading, setPageLoading] = useState(true);
+  const customerOptions = customers.map((c) => ({
+    value: c.id,
+    label: `${c.name} - ${c.email}`,
+  }));
+  const selectedCustomer = customerOptions.find(
+    (opt) => opt.value === form.customerId
+  );
 
   useEffect(() => {
     const init = async () => {
@@ -172,7 +180,7 @@ export default function CreateInvoicePage() {
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Customer *
               </label>
-              <select
+              {/* <select
                 className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200"
                 value={form.customerId}
                 onChange={(e) => setForm({ ...form, customerId: e.target.value })}
@@ -184,7 +192,41 @@ export default function CreateInvoicePage() {
                     {customer.name} - {customer.email}
                   </option>
                 ))}
-              </select>
+              </select> */}
+              <Select
+                options={customerOptions}
+                value={selectedCustomer}
+                onChange={(option) => {
+                  setForm({ ...form, customerId: option?.value || '' });
+                }}
+                placeholder="Search customer..."
+                isClearable
+                isSearchable={true} // ← PASTIKAN TRUE (DEFAULTNYA TRUE)
+                className="text-sm"
+                classNames={{
+                  control: (state) => 
+                    `rounded-lg border-gray-300 hover:border-blue-500 ${
+                      state.isFocused ? 'border-blue-500 ring-2 ring-blue-200' : ''
+                    }`,
+                  menu: () => 'mt-1 rounded-lg shadow-lg border border-gray-200',
+                  option: (state) =>
+                    `px-3 py-2 cursor-pointer ${
+                      state.isFocused ? 'bg-blue-50' : ''
+                    } ${state.isSelected ? 'bg-blue-600 text-white' : ''}`,
+                  placeholder: () => 'text-gray-400',
+                  input: () => 'text-gray-900',
+                }}
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    minHeight: '42px',
+                    boxShadow: 'none',
+                    '&:hover': {
+                      borderColor: '#3b82f6',
+                    },
+                  }),
+                }}
+              />
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
