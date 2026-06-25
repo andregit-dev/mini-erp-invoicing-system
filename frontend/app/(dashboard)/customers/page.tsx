@@ -9,13 +9,14 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Search, X, Loader2 } from 'lucide-react';
+import { Search, X, Loader2, Plus } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
-import { FormField, FormCard, FormActions } from '@/components/ui/Form';
+import { FormField, FormActions } from '@/components/ui/Form';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { Modal } from '@/components/ui/Modal';
 
 interface Customer {
   id: string;
@@ -46,7 +47,7 @@ export default function CustomersPage() {
     limit: 10,
     totalPages: 0,
   });
-  const [showForm, setShowForm] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
   const {
@@ -110,7 +111,7 @@ export default function CustomersPage() {
         await api.post('/customers', data);
         toast.success('Customer created successfully!');
       }
-      setShowForm(false);
+      setIsModalOpen(false);
       setEditingId(null);
       reset();
       fetchCustomers(pagination.page);
@@ -129,11 +130,11 @@ export default function CustomersPage() {
     setValue('email', customer.email);
     setValue('phone', customer.phone || '');
     setValue('address', customer.address || '');
-    setShowForm(true);
+    setIsModalOpen(true);
   };
 
-  const handleCancel = () => {
-    setShowForm(false);
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
     setEditingId(null);
     reset();
   };
@@ -160,21 +161,23 @@ export default function CustomersPage() {
       <div className="max-w-6xl mx-auto">
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Customers</h1>
-          <div className="flex gap-2">
-            <Button onClick={() => {
+          <Button
+            onClick={() => {
               setEditingId(null);
               reset();
-              setShowForm(!showForm);
-            }}>
-              {showForm ? 'Cancel' : '+ Add Customer'}
-            </Button>
-          </div>
+              setIsModalOpen(true);
+            }}
+            className="flex items-center gap-1"
+          >
+            <Plus className="w-4 h-4" />
+            Add Customer
+          </Button>
         </div>
 
         {/* Search Box */}
         <div className="relative mb-4 max-w-md">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
               placeholder="Search by name, email, or phone..."
@@ -205,36 +208,37 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {showForm && (
-          <FormCard>
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              {editingId ? 'Edit Customer' : 'Add New Customer'}
-            </h2>
-            <form onSubmit={handleSubmit(onSubmit)} className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField label="Name" error={errors.name?.message} required>
-                <Input {...register('name')} placeholder="Customer name" />
-              </FormField>
-              <FormField label="Email" error={errors.email?.message} required>
-                <Input {...register('email')} placeholder="customer@example.com" />
-              </FormField>
-              <FormField label="Phone" error={errors.phone?.message}>
-                <Input {...register('phone')} placeholder="Phone number" />
-              </FormField>
-              <FormField label="Address" error={errors.address?.message}>
-                <Input {...register('address')} placeholder="Address" />
-              </FormField>
-              <FormActions>
-                <Button type="submit" loading={isSubmitting}>
-                  {editingId ? 'Update' : 'Save'}
-                </Button>
-                <Button type="button" variant="secondary" onClick={handleCancel}>
-                  Cancel
-                </Button>
-              </FormActions>
-            </form>
-          </FormCard>
-        )}
+        {/* Modal */}
+        <Modal
+          isOpen={isModalOpen}
+          onClose={handleCloseModal}
+          title={editingId ? 'Edit Customer' : 'Add New Customer'}
+        >
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <FormField label="Name" error={errors.name?.message} required>
+              <Input {...register('name')} placeholder="Customer name" />
+            </FormField>
+            <FormField label="Email" error={errors.email?.message} required>
+              <Input {...register('email')} placeholder="customer@example.com" />
+            </FormField>
+            <FormField label="Phone" error={errors.phone?.message}>
+              <Input {...register('phone')} placeholder="Phone number" />
+            </FormField>
+            <FormField label="Address" error={errors.address?.message}>
+              <Input {...register('address')} placeholder="Address" />
+            </FormField>
+            <FormActions>
+              <Button type="submit" loading={isSubmitting}>
+                {editingId ? 'Update' : 'Save'}
+              </Button>
+              <Button type="button" variant="secondary" onClick={handleCloseModal}>
+                Cancel
+              </Button>
+            </FormActions>
+          </form>
+        </Modal>
 
+        {/* Table */}
         {loading ? (
           <SkeletonTable />
         ) : customers.length === 0 ? (
@@ -251,52 +255,54 @@ export default function CustomersPage() {
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
-                    <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {customers.map((customer) => (
-                    <tr key={customer.id} className="border-t border-gray-100 hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm">
-                        <Link href={`/customers/${customer.id}`} className="text-blue-600 hover:underline">
-                          {customer.name}
-                        </Link>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{customer.email}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600">{customer.phone || '-'}</td>
-                      <td className="px-4 py-3 text-sm">
-                        <div className="flex gap-2">
-                          <Button variant="secondary" size="sm" onClick={() => handleEdit(customer)}>
-                            Edit
-                          </Button>
-                          <Button variant="danger" size="sm" onClick={() => handleDelete(customer.id)}>
-                            Delete
-                          </Button>
-                        </div>
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[600px]">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {customers.map((customer) => (
+                      <tr key={customer.id} className="border-t border-gray-100 hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm">
+                          <Link href={`/customers/${customer.id}`} className="text-blue-600 hover:underline">
+                            {customer.name}
+                          </Link>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{customer.email}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600">{customer.phone || '-'}</td>
+                        <td className="px-4 py-3 text-sm">
+                          <div className="flex gap-2">
+                            <Button variant="secondary" size="sm" onClick={() => handleEdit(customer)}>
+                              Edit
+                            </Button>
+                            <Button variant="danger" size="sm" onClick={() => handleDelete(customer.id)}>
+                              Delete
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             {pagination.totalPages > 1 && (
-              <div className="flex justify-between items-center mt-4">
-                <div className="text-sm text-gray-600">
+              <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mt-4">
+                <div className="text-sm text-gray-600 order-2 sm:order-1">
                   Showing {(pagination.page - 1) * pagination.limit + 1} -{' '}
                   {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total}
                 </div>
-                <div className="flex gap-2">
+                <div className="flex gap-1 order-1 sm:order-2">
                   <button
                     onClick={() => goToPage(pagination.page - 1)}
                     disabled={pagination.page <= 1}
-                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                   >
                     Previous
                   </button>
@@ -306,7 +312,7 @@ export default function CustomersPage() {
                   <button
                     onClick={() => goToPage(pagination.page + 1)}
                     disabled={pagination.page >= pagination.totalPages}
-                    className="px-3 py-1 border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
+                    className="px-3 py-1 text-sm border border-gray-300 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition"
                   >
                     Next
                   </button>
