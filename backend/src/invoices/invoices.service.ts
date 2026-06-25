@@ -86,26 +86,38 @@ export class InvoicesService {
       where.status = filters.status;
     }
 
-    // Filter by date range
+    // Filter by date range (dueDate)
     if (filters.startDate || filters.endDate) {
-      where.createdAt = {};
+      where.dueDate = {};
       if (filters.startDate) {
-        where.createdAt.gte = new Date(filters.startDate);
+        where.dueDate.gte = new Date(filters.startDate);
       }
       if (filters.endDate) {
-        where.createdAt.lte = new Date(filters.endDate);
+        where.dueDate.lte = new Date(filters.endDate);
       }
     }
 
     if (search) {
       where.OR = [
-        { invoiceNumber: { contains: search, mode: 'insensitive' } },
+        { invoiceNumber: { contains: search } },
         {
           customer: {
-            name: { contains: search, mode: 'insensitive' },
+            name: { contains: search },
           },
         },
       ];
+    }
+
+    const sortBy = filters.sortBy || 'createdAt';
+    const sortOrder = filters.sortOrder || 'desc';
+
+    const orderBy: any = {};
+    if (sortBy === 'customer') {
+      orderBy.customer = { name: sortOrder };
+    } else if (['invoiceNumber', 'status', 'dueDate', 'createdAt', 'total'].includes(sortBy)) {
+      orderBy[sortBy] = sortOrder;
+    } else {
+      orderBy.createdAt = 'desc';
     }
 
     const [data, total] = await Promise.all([
@@ -122,7 +134,7 @@ export class InvoicesService {
             },
           },
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy,
         skip,
         take: limit,
       }),

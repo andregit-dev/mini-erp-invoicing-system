@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { AxiosError } from 'axios';
-import { Search, X, Loader2, Plus, Filter } from 'lucide-react';
+import { Search, X, Loader2, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -36,6 +36,10 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -54,6 +58,9 @@ export default function InvoicesPage() {
       let url = `/invoices?page=${page}&limit=10`;
       if (filter) url += `&status=${filter}`;
       if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+      if (startDate) url += `&startDate=${startDate}`;
+      if (endDate) url += `&endDate=${endDate}`;
+      url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       
       const res = await api.get(url);
       
@@ -88,7 +95,7 @@ export default function InvoicesPage() {
       fetchInvoices();
     };
     init();
-  }, [router, filter, debouncedSearch]);
+  }, [router, filter, debouncedSearch, sortBy, sortOrder, startDate, endDate]);
 
   const updateStatus = async (id: string, newStatus: string) => {
     setUpdating(id);
@@ -130,6 +137,32 @@ export default function InvoicesPage() {
     setIsSearching(false);
   };
 
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
+    <th
+      className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600 transition select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === field ? (
+          sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />
+        ) : (
+          <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+        )}
+      </div>
+    </th>
+  );
+
+
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -137,21 +170,6 @@ export default function InvoicesPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Invoices</h1>
           <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-            <div className="relative w-full sm:w-48">
-              <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <select
-                className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-              >
-                <option value="">All Status</option>
-                <option value="DRAFT">DRAFT</option>
-                <option value="SENT">SENT</option>
-                <option value="PAID">PAID</option>
-                <option value="OVERDUE">OVERDUE</option>
-                <option value="CANCELLED">CANCELLED</option>
-              </select>
-            </div>
             <Button
               onClick={() => router.push('/invoices/create')}
               className="flex items-center gap-1 w-full sm:w-auto justify-center"
@@ -162,13 +180,13 @@ export default function InvoicesPage() {
           </div>
         </div>
 
-        {/* Search Box */}
-        <div className="relative mb-4 max-w-md">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {/* Search Box */}
+          <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
-              placeholder="Search by invoice number or customer..."
+              placeholder="Search invoice or customer..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
@@ -190,10 +208,61 @@ export default function InvoicesPage() {
               </div>
             )}
           </div>
-          <span className="text-xs text-gray-500 mt-1 block">
-            {loading ? 'Loading...' : `Found ${pagination.total} invoices`}
-          </span>
+
+          {/* Status Filter */}
+          <div className="relative w-36 flex-shrink-0">
+            <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <select
+              className="w-full pl-9 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="">All Status</option>
+              <option value="DRAFT">DRAFT</option>
+              <option value="SENT">SENT</option>
+              <option value="PAID">PAID</option>
+              <option value="OVERDUE">OVERDUE</option>
+              <option value="CANCELLED">CANCELLED</option>
+            </select>
+          </div>
+
+          {/* Date Range */}
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Due date:</span>
+            <div className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-1 py-1">
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-2 py-1.5 text-sm bg-transparent focus:outline-none w-32"
+              />
+              <span className="text-gray-400 text-sm px-1">to</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-2 py-1.5 text-sm bg-transparent focus:outline-none w-32"
+              />
+            </div>
+
+            {(startDate || endDate) && (
+              <button
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            )}
+          </div>
         </div>
+
+        {/* Result count */}
+        {/* <span className="text-xs text-gray-500 mt-1 block mb-4">
+          {loading ? 'Loading...' : `Found ${pagination.total} invoices`}
+        </span> */}
 
         {/* Table */}
         {loading ? (
@@ -224,10 +293,11 @@ export default function InvoicesPage() {
                 <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Invoice #</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Customer</th>
+                      <SortableHeader field="invoiceNumber" label="Invoice #" />
+                      <SortableHeader field="customer" label="Customer" />
                       <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Total</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Status</th>
+                      <SortableHeader field="dueDate" label="Due Date" /> 
+                      <SortableHeader field="status" label="Status" />
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
                     </tr>
                   </thead>
@@ -237,10 +307,7 @@ export default function InvoicesPage() {
                       return (
                         <tr key={invoice.id} className="border-t border-gray-100 hover:bg-gray-50">
                           <td className="px-4 py-3 text-sm">
-                            <Link
-                              href={`/invoices/${invoice.id}`}
-                              className="text-blue-600 hover:underline font-medium"
-                            >
+                            <Link href={`/invoices/${invoice.id}`} className="text-blue-600 hover:underline font-medium">
                               {invoice.invoiceNumber}
                             </Link>
                           </td>
@@ -248,14 +315,17 @@ export default function InvoicesPage() {
                           <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
                             Rp {invoice.total.toLocaleString()}
                           </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {new Date(invoice.dueDate).toLocaleDateString('id-ID')}
+                          </td>
                           <td className="px-4 py-3">
                             <StatusBadge status={invoice.status as Status} showDot showIcon={false} />
                           </td>
                           <td className="px-4 py-3">
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1 min-w-[100px]">
                               {nextStatuses.length > 0 ? (
                                 <select
-                                  className="px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                  className="w-full min-w-[100px] px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
                                   onChange={(e) => updateStatus(invoice.id, e.target.value)}
                                   value=""
                                   disabled={updating === invoice.id}
@@ -268,7 +338,7 @@ export default function InvoicesPage() {
                                   ))}
                                 </select>
                               ) : (
-                                <span className="text-xs text-gray-400">No actions</span>
+                                <span className="text-xs text-gray-400 whitespace-nowrap">No actions</span>
                               )}
                               {updating === invoice.id && (
                                 <span className="text-xs text-gray-500 animate-pulse">⏳</span>
