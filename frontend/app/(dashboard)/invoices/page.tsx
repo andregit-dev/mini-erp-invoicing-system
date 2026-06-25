@@ -10,6 +10,8 @@ import { Search, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
+
 
 interface Invoice {
   id: string;
@@ -250,9 +252,10 @@ export default function InvoicesPage() {
                         <td className="px-4 py-3 text-sm text-gray-600">{invoice.customer.name}</td>
                         <td className="px-4 py-3 text-sm text-gray-900">Rp {invoice.total.toLocaleString()}</td>
                         <td className="px-4 py-3">
-                          <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
+                          {/* <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(invoice.status)}`}>
                             {invoice.status}
-                          </span>
+                          </span> */}
+                          <StatusBadge status={invoice.status as Status} showDot showIcon />
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex gap-1">

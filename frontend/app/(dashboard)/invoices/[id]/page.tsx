@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/Card';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
+import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
 
 interface InvoiceDetail {
   id: string;
@@ -159,9 +160,10 @@ export default function InvoiceDetailPage() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Status:</span>
-            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(invoice.status)}`}>
+            {/* <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(invoice.status)}`}>
               {invoice.status}
-            </span>
+            </span> */}
+            <StatusBadge status={invoice.status as Status} showDot showIcon />
           </div>
           <div className="flex gap-2">
             {nextStatuses.length > 0 ? (

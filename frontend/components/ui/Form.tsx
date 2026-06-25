@@ -17,7 +17,9 @@ export function FormField({ label, error, children, required }: FormFieldProps) 
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
-      {error && <p className="text-sm text-red-500">{error}</p>}
+      <div className="min-h-[20px]">
+        {error && <p className="text-sm text-red-500">{error}</p>}
+      </div>
     </div>
   );
 }

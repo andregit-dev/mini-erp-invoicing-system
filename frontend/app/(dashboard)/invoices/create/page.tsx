@@ -204,39 +204,39 @@ export default function CreateInvoicePage() {
               const itemTotal = qty * price;
 
               return (
-                <div key={field.id} className="grid grid-cols-12 gap-2 items-end">
-                  <div className="col-span-5">
+                <div key={field.id} className="grid grid-cols-1 sm:grid-cols-12 gap-2 items-start">
+                  {/* Description */}
+                  <div className="sm:col-span-5">
                     <FormField label="Description" error={errors.items?.[index]?.description?.message}>
-                      <Input
-                        {...register(`items.${index}.description`)}
-                        placeholder="Item description"
-                      />
+                      <Input {...register(`items.${index}.description`)} placeholder="Item description" />
                     </FormField>
                   </div>
-                  <div className="col-span-2">
+                  
+                  {/* Qty */}
+                  <div className="sm:col-span-2">
                     <FormField label="Qty" error={errors.items?.[index]?.quantity?.message}>
-                      <Input
-                        type="number"
-                        {...register(`items.${index}.quantity`, { valueAsNumber: true })}
-                      />
+                      <Input type="number" {...register(`items.${index}.quantity`, { valueAsNumber: true })} />
                     </FormField>
                   </div>
-                  <div className="col-span-2">
+                  
+                  {/* Price */}
+                  <div className="sm:col-span-2">
                     <FormField label="Price" error={errors.items?.[index]?.unitPrice?.message}>
-                      <Input
-                        type="number"
-                        {...register(`items.${index}.unitPrice`, { valueAsNumber: true })}
-                      />
+                      <Input type="number" {...register(`items.${index}.unitPrice`, { valueAsNumber: true })} />
                     </FormField>
                   </div>
-                  <div className="col-span-2">
+                  
+                  {/* Total */}
+                  <div className="sm:col-span-2">
                     <FormField label="Total">
                       <div className="px-3 py-2 text-sm font-medium text-gray-900 bg-gray-50 rounded-lg">
                         Rp {itemTotal.toLocaleString()}
                       </div>
                     </FormField>
                   </div>
-                  <div className="col-span-1">
+                  
+                  {/* Delete button */}
+                  <div className="sm:col-span-1 flex items-end">
                     <button
                       type="button"
                       onClick={() => remove(index)}
