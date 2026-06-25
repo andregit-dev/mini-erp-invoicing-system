@@ -9,7 +9,6 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Card } from '@/components/ui/Card';
 import { Search, X, Loader2 } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
@@ -35,7 +34,7 @@ interface PaginationMeta {
 
 export default function CustomersPage() {
   const router = useRouter();
-  const { checkAuth, logout } = useAuthStore();
+  const { checkAuth } = useAuthStore();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -156,11 +155,6 @@ export default function CustomersPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
-
   return (
     <div className="p-6">
       <div className="max-w-6xl mx-auto">
@@ -173,9 +167,6 @@ export default function CustomersPage() {
               setShowForm(!showForm);
             }}>
               {showForm ? 'Cancel' : '+ Add Customer'}
-            </Button>
-            <Button variant="secondary" onClick={handleLogout}>
-              Logout
             </Button>
           </div>
         </div>
@@ -214,7 +205,6 @@ export default function CustomersPage() {
           </div>
         </div>
 
-        {/* Form dengan React Hook Form + Zod */}
         {showForm && (
           <FormCard>
             <h2 className="text-lg font-semibold text-gray-900 mb-4">
