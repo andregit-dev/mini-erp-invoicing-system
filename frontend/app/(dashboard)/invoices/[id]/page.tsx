@@ -10,7 +10,7 @@ import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
 import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
-import { Check, ChevronDown, Send, Ban, AlertCircle } from 'lucide-react';
+import { ChevronDown, Send, ArrowLeft } from 'lucide-react';
 
 interface InvoiceDetail {
   id: string;
@@ -109,17 +109,6 @@ export default function InvoiceDetailPage() {
     return statusFlow[currentStatus] || [];
   };
 
-  // 🔥 STATUS ICON
-  const getStatusIcon = (status: string) => {
-    const icons: Record<string, React.ReactNode> = {
-      SENT: <Send className="w-4 h-4" />,
-      PAID: <Check className="w-4 h-4" />,
-      OVERDUE: <AlertCircle className="w-4 h-4" />,
-      CANCELLED: <Ban className="w-4 h-4" />,
-    };
-    return icons[status] || null;
-  };
-
   if (loading) {
     return (
       <div className="space-y-6">
@@ -142,6 +131,7 @@ export default function InvoiceDetailPage() {
   }
 
   const nextStatuses = getNextStatuses(invoice.status);
+  const isDraft = invoice.status === 'DRAFT';
 
   return (
     <div className="max-w-4xl mx-auto">
@@ -154,8 +144,9 @@ export default function InvoiceDetailPage() {
             Created: {new Date(invoice.createdAt).toLocaleDateString('id-ID')}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => router.push('/invoices')}>
-          ← Back
+        <Button variant="secondary" onClick={() => router.push('/invoices')} className="flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </Button>
       </div>
 
@@ -169,26 +160,46 @@ export default function InvoiceDetailPage() {
 
           <div className="flex items-center gap-2 w-full sm:w-auto">
             {nextStatuses.length > 0 ? (
-              <div className="relative w-full sm:w-auto">
-                <select
-                  value={selectedStatus}
-                  onChange={(e) => {
-                    setSelectedStatus(e.target.value);
-                    if (e.target.value) updateStatus(e.target.value);
-                  }}
-                  disabled={updating}
-                  className="w-full sm:w-auto pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
-                >
-                  <option value="">Update status...</option>
-                  {nextStatuses.map((status) => (
-                    <option key={status} value={status} className="flex items-center gap-2">
-                      {status}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                {updating && <span className="text-xs text-gray-500 ml-2">Updating...</span>}
-              </div>
+              <>
+                {isDraft ? (
+                  <Button
+                    size="sm"
+                    onClick={() => updateStatus('SENT')}
+                    loading={updating}
+                    className="flex items-center gap-1"
+                  >
+                    <Send className="w-4 h-4" />
+                    Mark as Sent
+                  </Button>
+                ) : (
+                  <div className="relative w-full sm:w-auto">
+                    <select
+                      value={selectedStatus}
+                      onChange={(e) => {
+                        setSelectedStatus(e.target.value);
+                        if (e.target.value) updateStatus(e.target.value);
+                      }}
+                      disabled={updating}
+                      className="w-full sm:w-auto pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
+                    >
+                      <option value="">Update status...</option>
+                      {nextStatuses.map((status) => {
+                        const dots: Record<string, string> = {
+                          PAID: '🟢',
+                          OVERDUE: '🔴',
+                          CANCELLED: '⚫',
+                        };
+                        return (
+                          <option key={status} value={status}>
+                            {dots[status] || '●'} {status}
+                          </option>
+                        );
+                      })}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  </div>
+                )}
+              </>
             ) : (
               <span className="text-sm text-gray-400">No more status updates</span>
             )}
@@ -196,7 +207,7 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Customer Info - Sama */}
+      {/* Customer Info */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Customer</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -229,7 +240,7 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Items - Sama */}
+      {/* Items */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Items</h2>
         <div className="overflow-x-auto">
