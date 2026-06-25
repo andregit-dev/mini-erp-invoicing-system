@@ -140,11 +140,6 @@ export default function InvoicesPage() {
     setIsSearching(false);
   };
 
-  const handleLogout = async () => {
-    await logout();
-    router.push('/login');
-  };
-
   return (
     <div className="min-h-screen p-8 bg-gray-50">
       <div className="max-w-6xl mx-auto">
@@ -168,12 +163,6 @@ export default function InvoicesPage() {
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition"
             >
               + Create Invoice
-            </button>
-            <button
-              onClick={handleLogout}
-              className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition"
-            >
-              Logout
             </button>
           </div>
         </div>
