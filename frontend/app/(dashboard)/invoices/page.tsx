@@ -9,6 +9,7 @@ import { AxiosError } from 'axios';
 import { Search, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface Invoice {
   id: string;
@@ -211,10 +212,26 @@ export default function InvoicesPage() {
         </div>
 
         {loading ? (
-          // <div className="text-center py-8 text-gray-600">Loading...</div>
           <SkeletonTable />
         ) : invoices.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No invoices found</div>
+          <EmptyState
+            title={
+              search || filter 
+                ? `No invoices found${search ? ` for "${search}"` : ''}${filter ? ` with status "${filter}"` : ''}`
+                : 'No invoices yet'
+            }
+            description={
+              search || filter 
+                ? 'Try adjusting your search or filters'
+                : 'Create your first invoice to get started'
+            }
+            icon={search || filter ? 'search' : 'empty'}
+            searchQuery={search || filter ? (search || filter) : undefined}
+            onClearSearch={(search || filter) ? () => {
+              setSearch('');
+              setFilter('');
+            } : undefined}
+          />
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">

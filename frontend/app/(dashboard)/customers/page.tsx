@@ -16,6 +16,7 @@ import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
 import { FormField, FormCard, FormActions } from '@/components/ui/Form';
+import { EmptyState } from '@/components/ui/EmptyState';
 
 interface Customer {
   id: string;
@@ -247,7 +248,16 @@ export default function CustomersPage() {
         {loading ? (
           <SkeletonTable />
         ) : customers.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">No customers found</div>
+          <EmptyState
+            title={search ? `No customers found for "${search}"` : 'No customers yet'}
+            description={search ? 'Try adjusting your search or clear the filter' : 'Add your first customer to get started'}
+            icon={search ? 'search' : 'empty'}
+            searchQuery={search || undefined}
+            onClearSearch={search ? () => {
+              setSearch('');
+              setDebouncedSearch('');
+            } : undefined}
+          />
         ) : (
           <>
             <div className="bg-white rounded-lg shadow overflow-hidden">
