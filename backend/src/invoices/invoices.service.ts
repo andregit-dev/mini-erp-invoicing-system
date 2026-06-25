@@ -100,10 +100,10 @@ export class InvoicesService {
 
     if (search) {
       where.OR = [
-        { invoiceNumber: { contains: search } },
+        { invoiceNumber: { contains: search, mode: 'insensitive' } },
         {
           customer: {
-            name: { contains: search },
+            name: { contains: search, mode: 'insensitive' },
           },
         },
       ];
