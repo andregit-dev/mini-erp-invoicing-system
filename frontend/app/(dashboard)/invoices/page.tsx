@@ -30,7 +30,7 @@ interface PaginationMeta {
 
 export default function InvoicesPage() {
   const router = useRouter();
-  const { checkAuth, logout } = useAuthStore();
+  const { checkAuth } = useAuthStore();
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
