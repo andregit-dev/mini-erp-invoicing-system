@@ -15,11 +15,11 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { CustomersService } from './customers.service';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
+import { FilterCustomerDto } from './dto/filter-customer.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('customers')
@@ -38,21 +38,18 @@ export class CustomersController {
 
   @Get()
   @ApiOperation({ summary: 'Get all customers with search and pagination' })
-  @ApiQuery({ name: 'search', required: false, description: 'Search by name, email, or phone' })
-  @ApiQuery({ name: 'page', required: false, description: 'Page number' })
-  @ApiQuery({ name: 'limit', required: false, description: 'Items per page' })
   @ApiResponse({ status: 200, description: 'List of customers' })
   findAll(
     @Request() req,
-    @Query('search') search?: string,
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
+    @Query() filters: FilterCustomerDto,
   ) {
     return this.customersService.findAll(
       req.user.id,
-      search,
-      parseInt(page, 10),
-      parseInt(limit, 10),
+      filters.search,
+      filters.page || 1,
+      filters.limit || 10,
+      filters.sortBy || 'createdAt',
+      filters.sortOrder || 'desc',
     );
   }
 

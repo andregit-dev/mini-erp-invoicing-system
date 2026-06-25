@@ -9,7 +9,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Search, X, Loader2, Plus } from 'lucide-react';
+import { Search, X, Loader2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
@@ -41,6 +41,8 @@ export default function CustomersPage() {
   const [search, setSearch] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [isSearching, setIsSearching] = useState(false);
+  const [sortBy, setSortBy] = useState('createdAt');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [pagination, setPagination] = useState<PaginationMeta>({
     total: 0,
     page: 1,
@@ -66,7 +68,7 @@ export default function CustomersPage() {
     setIsSearching(false);
     try {
       const searchParam = debouncedSearch ? `&search=${encodeURIComponent(debouncedSearch)}` : '';
-      const url = `/customers?page=${page}&limit=10${searchParam}`;
+      const url = `/customers?page=${page}&limit=10${searchParam}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       const res = await api.get(url);
       
       if (res.data && res.data.data) {
@@ -100,7 +102,32 @@ export default function CustomersPage() {
       fetchCustomers();
     };
     init();
-  }, [router, debouncedSearch]);
+  }, [router, debouncedSearch, sortBy, sortOrder]);
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const SortableHeader = ({ field, label }: { field: string; label: string }) => (
+    <th
+      className="px-4 py-3 text-left text-sm font-medium text-gray-700 cursor-pointer hover:text-blue-600 transition select-none"
+      onClick={() => handleSort(field)}
+    >
+      <div className="flex items-center gap-1">
+        {label}
+        {sortBy === field ? (
+          sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />
+        ) : (
+          <ArrowUpDown className="w-3.5 h-3.5 text-gray-400" />
+        )}
+      </div>
+    </th>
+  );
 
   const onSubmit = async (data: CustomerFormData) => {
     try {
@@ -259,9 +286,9 @@ export default function CustomersPage() {
                 <table className="w-full min-w-[600px]">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Name</th>
+                      <SortableHeader field="name" label="Name" />
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Email</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Phone</th>
+                      <SortableHeader field="phone" label="Phone" />
                       <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Actions</th>
                     </tr>
                   </thead>
