@@ -38,6 +38,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       if ('code' in exception && (exception as any).code) {
         const prismaError = exception as any;
         switch (prismaError.code) {
+          case 'P2000':
+            status = HttpStatus.BAD_REQUEST;
+            message = 'Value too long for column';
+            break;
+          case 'P2001':
+            status = HttpStatus.NOT_FOUND;
+            message = 'Record does not exist';
+            break;
+          case 'P2004':
+            status = HttpStatus.BAD_REQUEST;
+            message = 'Constraint failed on the database';
+            break;
+          case 'P2011':
+            status = HttpStatus.BAD_REQUEST;
+            message = 'Null constraint violation';
+            break;
           case 'P2002':
             status = HttpStatus.CONFLICT;
             message = 'Duplicate entry: ' + (prismaError.meta?.target || '');

@@ -14,58 +14,57 @@ export class InvoicesService {
   constructor(private prisma: PrismaService) {}
 
   async create(userId: string, dto: CreateInvoiceDto) {
-    // Cek customer exists
-    const customer = await this.prisma.customer.findUnique({
-      where: { id: dto.customerId },
-    });
+    return this.prisma.$transaction(async (tx) => {
+      const customer = await tx.customer.findUnique({
+        where: { id: dto.customerId },
+      });
 
-    if (!customer) {
-      throw new NotFoundException('Customer not found');
-    }
+      if (!customer) {
+        throw new NotFoundException('Customer not found');
+      }
 
-    // Hitung subtotal, tax, total
-    const subtotal = dto.items.reduce(
-      (sum, item) => sum + item.quantity * item.unitPrice,
-      0,
-    );
-    const tax = subtotal * 0.11;
-    const total = subtotal + tax;
+      const subtotal = dto.items.reduce(
+        (sum, item) => sum + item.quantity * item.unitPrice,
+        0,
+      );
+      const tax = subtotal * 0.11;
+      const total = subtotal + tax;
 
-    const timestamp = Date.now().toString().slice(-8);
-    const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-    const invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
+      const timestamp = Date.now().toString().slice(-8);
+      const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
+      const invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
 
-    // Create invoice with items
-    return this.prisma.invoice.create({
-      data: {
-        invoiceNumber,
-        dueDate: new Date(dto.dueDate),
-        subtotal,
-        tax,
-        total,
-        note: dto.note,
-        customerId: dto.customerId,
-        userId,
-        items: {
-          create: dto.items.map((item) => ({
-            description: item.description,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            total: item.quantity * item.unitPrice,
-          })),
-        },
-      },
-      include: {
-        customer: true,
-        items: true,
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+      return tx.invoice.create({
+        data: {
+          invoiceNumber,
+          dueDate: new Date(dto.dueDate),
+          subtotal,
+          tax,
+          total,
+          note: dto.note,
+          customerId: dto.customerId,
+          userId,
+          items: {
+            create: dto.items.map((item) => ({
+              description: item.description,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              total: item.quantity * item.unitPrice,
+            })),
           },
         },
-      },
+        include: {
+          customer: true,
+          items: true,
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+        },
+      });
     });
   }
 

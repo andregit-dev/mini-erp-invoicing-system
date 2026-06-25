@@ -90,7 +90,7 @@ async function main() {
   console.log('🌱 Starting seed with realistic data...');
 
   // 1. Create users
-  const hashedPassword = await bcrypt.hash('password123', 10);
+  const hashedPassword = await bcrypt.hash('password123', 12);
   
   const users = await Promise.all([
     prisma.user.create({

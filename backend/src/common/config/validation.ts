@@ -1,6 +1,12 @@
 import { plainToClass } from 'class-transformer';
-import { IsString, IsNotEmpty, validateSync } from 'class-validator';
+import { IsString, IsEnum, IsNotEmpty, validateSync } from 'class-validator';
 import { Logger } from '@nestjs/common';
+
+export enum NodeEnv {
+  DEV = 'DEV',
+  STG = 'STG',
+  PROD = 'PROD',
+}
 
 class EnvironmentVariables {
   @IsString()
@@ -11,8 +17,10 @@ class EnvironmentVariables {
   @IsNotEmpty()
   JWT_SECRET: string;
 
-  @IsString()
-  NODE_ENV: string = 'development';
+  @IsEnum(NodeEnv, {
+    message: 'NODE_ENV must be one of: DEV, STG, PROD',
+  })
+  NODE_ENV: NodeEnv = NodeEnv.DEV;
 }
 
 const logger = new Logger('EnvironmentValidation');

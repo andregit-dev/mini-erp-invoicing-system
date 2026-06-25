@@ -26,6 +26,7 @@ export class CustomersService {
 
     const where: any = {
       userId,
+      deletedAt: null,
     };
 
     if (search) {
@@ -62,6 +63,7 @@ export class CustomersService {
       where: {
         id,
         userId,
+        deletedAt: null,
       },
       include: {
         invoices: {
@@ -95,8 +97,11 @@ export class CustomersService {
   async remove(id: string, userId: string) {
     await this.findOne(id, userId);
 
-    return this.prisma.customer.delete({
+    return this.prisma.customer.update({
       where: { id },
+      data: {
+        deletedAt: new Date(),
+      },
     });
   }
 }

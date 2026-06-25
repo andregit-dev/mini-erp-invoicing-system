@@ -32,10 +32,11 @@ model Customer {
   invoices  Invoice[]
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@index([userId]) // JOIN User
-  @@index([email])  // Search customer by email
-  @@index([name])   // Search customer by name
+  @@index([email]) // Search customer by email
+  @@index([name]) // Search customer by name
 }
 
 model Invoice {
@@ -55,11 +56,11 @@ model Invoice {
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
-  @@index([status])     // Filter invoice by status
-  @@index([dueDate])    // Sorting & filter by dueDate
-  @@index([createdAt])  // Sorting & filter by date
+  @@index([status]) // Filter invoice by status
+  @@index([dueDate]) // Sorting & filter by dueDate
+  @@index([createdAt]) // Sorting & filter by date
   @@index([customerId]) // JOIN Customer
-  @@index([userId])     // JOIN User
+  @@index([userId]) // JOIN User
 }
 
 model InvoiceItem {
