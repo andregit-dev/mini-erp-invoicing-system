@@ -11,6 +11,8 @@ import { toast } from 'sonner';
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
 import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
 import { ChevronDown, Send, ArrowLeft } from 'lucide-react';
+import { generateInvoicePDF } from '@/lib/pdf-generator';
+import { FileText } from 'lucide-react';
 
 interface InvoiceDetail {
   id: string;
@@ -132,10 +134,28 @@ export default function InvoiceDetailPage() {
 
   const nextStatuses = getNextStatuses(invoice.status);
   const isDraft = invoice.status === 'DRAFT';
+  
+  const handleDownloadPDF = () => {
+    if (!invoice) return;
+    
+    generateInvoicePDF({
+      invoiceNumber: invoice.invoiceNumber,
+      status: invoice.status,
+      createdAt: invoice.createdAt,
+      dueDate: invoice.dueDate,
+      note: invoice.note,
+      customer: invoice.customer,
+      items: invoice.items,
+      subtotal: invoice.subtotal,
+      tax: invoice.tax,
+      total: invoice.total,
+      user: invoice.user,
+    });
+  };
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">
             Invoice #{invoice.invoiceNumber}
@@ -144,10 +164,16 @@ export default function InvoiceDetailPage() {
             Created: {new Date(invoice.createdAt).toLocaleDateString('id-ID')}
           </p>
         </div>
-        <Button variant="secondary" onClick={() => router.push('/invoices')} className="flex items-center gap-1">
-          <ArrowLeft className="w-4 h-4" />
-          Back
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => router.push('/invoices')} className="flex items-center gap-1">
+            <ArrowLeft className="w-4 h-4" />
+            Back
+          </Button>
+          <Button variant="secondary" onClick={handleDownloadPDF} className="flex items-center gap-1">
+            <FileText className="w-4 h-4" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       {/* Status Section */}
@@ -206,6 +232,60 @@ export default function InvoiceDetailPage() {
           </div>
         </div>
       </Card>
+
+      {/* 🔥 VERSI PDF - TANPA TOMBOL STATUS */}
+      <div id="invoice-content" className="hidden">
+        <div className="bg-white p-8">
+          <div className="text-center border-b pb-4 mb-6">
+            <h1 className="text-2xl font-bold">INVOICE</h1>
+            <p className="text-sm text-gray-500">#{invoice.invoiceNumber}</p>
+          </div>
+          {/* Customer Info */}
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-4">Customer</h2>
+            <div className="grid grid-cols-2 gap-4">
+              <div><p className="text-sm text-gray-500">Name</p><p>{invoice.customer.name}</p></div>
+              <div><p className="text-sm text-gray-500">Email</p><p>{invoice.customer.email}</p></div>
+              <div><p className="text-sm text-gray-500">Phone</p><p>{invoice.customer.phone || '-'}</p></div>
+              <div><p className="text-sm text-gray-500">Address</p><p>{invoice.customer.address || '-'}</p></div>
+              <div><p className="text-sm text-gray-500">Due Date</p><p>{new Date(invoice.dueDate).toLocaleDateString('id-ID')}</p></div>
+              {invoice.note && (
+                <div className="col-span-2"><p className="text-sm text-gray-500">Note</p><p>{invoice.note}</p></div>
+              )}
+            </div>
+          </div>
+          {/* Items */}
+          <div>
+            <h2 className="text-lg font-semibold mb-4">Items</h2>
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-4 py-2 text-left text-sm font-medium">Description</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium">Qty</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium">Price</th>
+                  <th className="px-4 py-2 text-right text-sm font-medium">Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {invoice.items.map((item) => (
+                  <tr key={item.id} className="border-t">
+                    <td className="px-4 py-2 text-sm">{item.description}</td>
+                    <td className="px-4 py-2 text-sm text-right">{item.quantity}</td>
+                    <td className="px-4 py-2 text-sm text-right">Rp {item.unitPrice.toLocaleString()}</td>
+                    <td className="px-4 py-2 text-sm text-right">Rp {item.total.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot className="border-t-2">
+                <tr><td colSpan={3} className="px-4 py-2 text-right font-medium">Subtotal</td><td className="px-4 py-2 text-right">Rp {invoice.subtotal.toLocaleString()}</td></tr>
+                <tr><td colSpan={3} className="px-4 py-2 text-right font-medium">Tax (11%)</td><td className="px-4 py-2 text-right">Rp {invoice.tax.toLocaleString()}</td></tr>
+                <tr className="bg-blue-50"><td colSpan={3} className="px-4 py-2 text-right font-bold">Total</td><td className="px-4 py-2 text-right font-bold text-blue-600">Rp {invoice.total.toLocaleString()}</td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <div className="text-sm text-gray-500 text-right mt-6">Created by: {invoice.user?.name || 'Unknown'}</div>
+        </div>
+      </div>
 
       {/* Customer Info */}
       <Card className="mb-6">
