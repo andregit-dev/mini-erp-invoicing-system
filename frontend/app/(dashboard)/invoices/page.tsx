@@ -12,6 +12,7 @@ import { SkeletonTable } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
+import { formatDate } from '@/lib/format';
 
 interface Invoice {
   id: string;
@@ -98,6 +99,13 @@ export default function InvoicesPage() {
   }, [router, filter, debouncedSearch, sortBy, sortOrder, startDate, endDate]);
 
   const updateStatus = async (id: string, newStatus: string) => {
+    const invoice = invoices.find((inv) => inv.id === id);
+    if (!invoice) return;
+
+    if (!confirm(`Are you sure you want to change status to "${newStatus}" for invoice #${invoice.invoiceNumber}?`)) {
+      return;
+    }
+
     setUpdating(id);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
@@ -316,7 +324,7 @@ export default function InvoicesPage() {
                             Rp {invoice.total.toLocaleString()}
                           </td>
                           <td className="px-4 py-3 text-sm text-gray-600">
-                            {new Date(invoice.dueDate).toLocaleDateString('id-ID')}
+                            {formatDate(invoice.dueDate)}
                           </td>
                           <td className="px-4 py-3">
                             <StatusBadge status={invoice.status as Status} showDot showIcon={false} />
@@ -325,12 +333,12 @@ export default function InvoicesPage() {
                             <div className="flex items-center gap-1 min-w-[100px]">
                               {nextStatuses.length > 0 ? (
                                 <select
-                                  className="w-full min-w-[100px] px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
+                                  className="w-full min-w-[80px] px-2 py-1 text-xs border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white text-gray-700"
                                   onChange={(e) => updateStatus(invoice.id, e.target.value)}
                                   value=""
                                   disabled={updating === invoice.id}
                                 >
-                                  <option value="">Update...</option>
+                                  <option value="">Update status</option>
                                   {nextStatuses.map((status) => (
                                     <option key={status} value={status}>
                                       {status}
