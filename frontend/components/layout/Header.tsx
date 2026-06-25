@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/lib/store/authStore';
+import { Button } from '@/components/ui/Button';
+import { LogOut, User } from 'lucide-react';
 
 export function Header() {
   const router = useRouter();
@@ -21,17 +23,31 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-6 py-3">
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-gray-800">Dashboard</h2>
-        <div className="flex items-center gap-3">
-          <span className="text-sm text-gray-600">Welcome, {userName}</span>
-          <button
+    <header className="bg-white border-b border-gray-200 px-4 py-3 sm:px-6">
+      <div className="flex items-center justify-between gap-2">
+        {/* Left: Title */}
+        <h2 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">
+          Dashboard
+        </h2>
+
+        {/* Right: User info + Logout */}
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 text-sm text-gray-600 whitespace-nowrap">
+            <User className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
+            <span className="text-sm">
+              Welcome, {userName}
+            </span>
+          </div>
+
+          <Button
+            variant="danger"
+            size="sm"
             onClick={handleLogout}
-            className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition"
+            className="flex items-center gap-1 flex-shrink-0"
           >
-            Logout
-          </button>
+            <LogOut className="w-4 h-4" />
+            <span>Logout</span>
+          </Button>
         </div>
       </div>
     </header>
