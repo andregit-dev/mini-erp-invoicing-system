@@ -82,7 +82,11 @@ export default function InvoiceDetailPage() {
 
   const updateStatus = async (newStatus: string) => {
     if (!newStatus) return;
-    if (!confirm(`Change status to ${newStatus}?`)) return;
+    
+    if (!invoice) return;
+    if (!confirm(`Are you sure you want to change status to "${newStatus}" for invoice #${invoice.invoiceNumber}?`)) {
+      return;
+    }
 
     setUpdating(true);
     try {
@@ -193,7 +197,7 @@ export default function InvoiceDetailPage() {
                     size="sm"
                     onClick={() => updateStatus('SENT')}
                     loading={updating}
-                    className="flex items-center gap-1"
+                    className="flex items-center gap-1 w-full sm:w-auto justify-center"
                   >
                     <Send className="w-4 h-4" />
                     Mark as Sent
@@ -203,13 +207,18 @@ export default function InvoiceDetailPage() {
                     <select
                       value={selectedStatus}
                       onChange={(e) => {
-                        setSelectedStatus(e.target.value);
-                        if (e.target.value) updateStatus(e.target.value);
+                        const newStatus = e.target.value;
+                        if (!newStatus) return;
+                        // setSelectedStatus(newStatus)
+                        updateStatus(newStatus);
+                        setTimeout(() => {
+                          setSelectedStatus('');
+                        }, 1500);
                       }}
                       disabled={updating}
                       className="w-full sm:w-auto pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
                     >
-                      <option value="">Update status...</option>
+                      <option value="">Update status</option>
                       {nextStatuses.map((status) => {
                         const dots: Record<string, string> = {
                           PAID: '🟢',
