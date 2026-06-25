@@ -10,6 +10,7 @@ import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
 import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
+import { Check, ChevronDown, Send, Ban, AlertCircle } from 'lucide-react';
 
 interface InvoiceDetail {
   id: string;
@@ -50,6 +51,7 @@ export default function InvoiceDetailPage() {
   const [invoice, setInvoice] = useState<InvoiceDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState('');
 
   const fetchInvoice = async () => {
     try {
@@ -76,12 +78,14 @@ export default function InvoiceDetailPage() {
   }, [id, router, checkAuth]);
 
   const updateStatus = async (newStatus: string) => {
+    if (!newStatus) return;
     if (!confirm(`Change status to ${newStatus}?`)) return;
 
     setUpdating(true);
     try {
       await api.patch(`/invoices/${id}/status`, { status: newStatus });
       toast.success(`Status updated to ${newStatus}`);
+      setSelectedStatus('');
       fetchInvoice();
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -92,17 +96,6 @@ export default function InvoiceDetailPage() {
     } finally {
       setUpdating(false);
     }
-  };
-
-  const getStatusColor = (status: string) => {
-    const colors: Record<string, string> = {
-      DRAFT: 'bg-gray-200 text-gray-800',
-      SENT: 'bg-blue-200 text-blue-800',
-      PAID: 'bg-green-200 text-green-800',
-      OVERDUE: 'bg-red-200 text-red-800',
-      CANCELLED: 'bg-gray-200 text-gray-800',
-    };
-    return colors[status] || 'bg-gray-200 text-gray-800';
   };
 
   const getNextStatuses = (currentStatus: string): string[] => {
@@ -116,14 +109,25 @@ export default function InvoiceDetailPage() {
     return statusFlow[currentStatus] || [];
   };
 
+  // 🔥 STATUS ICON
+  const getStatusIcon = (status: string) => {
+    const icons: Record<string, React.ReactNode> = {
+      SENT: <Send className="w-4 h-4" />,
+      PAID: <Check className="w-4 h-4" />,
+      OVERDUE: <AlertCircle className="w-4 h-4" />,
+      CANCELLED: <Ban className="w-4 h-4" />,
+    };
+    return icons[status] || null;
+  };
+
   if (loading) {
     return (
       <div className="space-y-6">
         <Skeleton className="h-10 w-48" />
-        <SkeletonCard /> {/* Kotak kartu 1 */}
+        <SkeletonCard />
         <div>
-          <SkeletonCard /> {/* Kotak kartu 2 */}
-          <SkeletonText /> {/* Baris teks di bawah kartu 2 */}
+          <SkeletonCard />
+          <SkeletonText />
         </div>
       </div>
     );
@@ -157,27 +161,34 @@ export default function InvoiceDetailPage() {
 
       {/* Status Section */}
       <Card className="mb-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <span className="text-sm font-medium text-gray-700">Status:</span>
-            {/* <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(invoice.status)}`}>
-              {invoice.status}
-            </span> */}
             <StatusBadge status={invoice.status as Status} showDot showIcon />
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             {nextStatuses.length > 0 ? (
-              nextStatuses.map((status) => (
-                <Button
-                  key={status}
-                  variant="primary"
-                  size="sm"
-                  loading={updating}
-                  onClick={() => updateStatus(status)}
+              <div className="relative w-full sm:w-auto">
+                <select
+                  value={selectedStatus}
+                  onChange={(e) => {
+                    setSelectedStatus(e.target.value);
+                    if (e.target.value) updateStatus(e.target.value);
+                  }}
+                  disabled={updating}
+                  className="w-full sm:w-auto pl-3 pr-8 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none bg-white text-gray-700"
                 >
-                  Mark as {status}
-                </Button>
-              ))
+                  <option value="">Update status...</option>
+                  {nextStatuses.map((status) => (
+                    <option key={status} value={status} className="flex items-center gap-2">
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                {updating && <span className="text-xs text-gray-500 ml-2">Updating...</span>}
+              </div>
             ) : (
               <span className="text-sm text-gray-400">No more status updates</span>
             )}
@@ -185,7 +196,7 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Customer Info */}
+      {/* Customer Info - Sama */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Customer</h2>
         <div className="grid grid-cols-2 gap-4">
@@ -218,7 +229,7 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Items */}
+      {/* Items - Sama */}
       <Card className="mb-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">Items</h2>
         <div className="overflow-x-auto">
@@ -275,7 +286,6 @@ export default function InvoiceDetailPage() {
         </div>
       </Card>
 
-      {/* Created By */}
       <div className="text-sm text-gray-500 text-right">
         Created by: {invoice.user?.name || 'Unknown'} ({invoice.user?.email || ''})
       </div>

@@ -14,7 +14,8 @@ import Select from 'react-select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoiceSchema, InvoiceFormData } from '@/lib/validations/invoice';
-import { FormField, FormCard, FormActions } from '@/components/ui/Form';
+import { FormField } from '@/components/ui/Form';
+import { X, ChevronDown, Plus } from 'lucide-react';
 
 interface Customer {
   id: string;
@@ -192,8 +193,10 @@ export default function CreateInvoicePage() {
               variant="secondary" 
               size="sm" 
               onClick={() => append({ description: '', quantity: 1, unitPrice: 0 })}
+              className="flex items-center gap-1"
             >
-              + Add Item
+              <Plus className="w-4 h-4" />
+              Add Item
             </Button>
           </div>
 
@@ -240,10 +243,10 @@ export default function CreateInvoicePage() {
                     <button
                       type="button"
                       onClick={() => remove(index)}
-                      className="w-full px-2 py-2 text-red-600 hover:text-red-800 border border-red-200 rounded-lg hover:bg-red-50 transition"
+                      className="w-full px-2 py-2 text-red-600 hover:text-red-800 border border-red-200 rounded-lg hover:bg-red-50 transition flex items-center justify-center"
                       disabled={fields.length === 1}
                     >
-                      ✕
+                      <X className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
