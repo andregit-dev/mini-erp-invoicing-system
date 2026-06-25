@@ -30,9 +30,7 @@ export class InvoicesService {
       const tax = subtotal * 0.11;
       const total = subtotal + tax;
 
-      const timestamp = Date.now().toString().slice(-8);
-      const randomSuffix = Math.random().toString(36).substring(2, 5).toUpperCase();
-      const invoiceNumber = `INV-${timestamp}-${randomSuffix}`;
+      const invoiceNumber = await this.generateInvoiceNumber();
 
       return tx.invoice.create({
         data: {
@@ -66,6 +64,33 @@ export class InvoicesService {
         },
       });
     });
+  }
+
+  async generateInvoiceNumber(): Promise<string> {
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const datePrefix = `${year}${month}${day}`; // YYYYMMDD
+
+    const lastInvoice = await this.prisma.invoice.findFirst({
+      where: {
+        invoiceNumber: {
+          startsWith: `INV-${datePrefix}`,
+        },
+      },
+      orderBy: {
+        invoiceNumber: 'desc',
+      },
+    });
+
+    let sequence = 1;
+    if (lastInvoice) {
+      const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2]);
+      sequence = lastNumber + 1;
+    }
+
+    return `INV-${datePrefix}-${String(sequence).padStart(4, '0')}`;
   }
 
   async findAll(

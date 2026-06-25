@@ -39,18 +39,8 @@ export class CustomersController {
   @Get()
   @ApiOperation({ summary: 'Get all customers with search and pagination' })
   @ApiResponse({ status: 200, description: 'List of customers' })
-  findAll(
-    @Request() req,
-    @Query() filters: FilterCustomerDto,
-  ) {
-    return this.customersService.findAll(
-      req.user.id,
-      filters.search,
-      filters.page || 1,
-      filters.limit || 10,
-      filters.sortBy || 'createdAt',
-      filters.sortOrder || 'desc',
-    );
+  findAll(@Request() req, @Query() filters: FilterCustomerDto) {
+    return this.customersService.findAll(req.user.id, filters);
   }
 
   @Get(':id')
