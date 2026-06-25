@@ -35,7 +35,7 @@ export function Header() {
           <div className="flex items-center gap-1.5 sm:gap-2 text-sm text-gray-600 whitespace-nowrap">
             <User className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
             <span className="text-sm">
-              Welcome, {userName}
+              {userName}
             </span>
           </div>
 
