@@ -10,17 +10,27 @@ import { Input } from '@/components/ui/Input';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonForm } from '@/components/ui/Skeleton';
-import Select from 'react-select';
+import { components, OptionProps } from 'react-select';
 import { useForm, useFieldArray } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { invoiceSchema, InvoiceFormData } from '@/lib/validations/invoice';
 import { FormField } from '@/components/ui/Form';
-import { X, ChevronDown, Plus } from 'lucide-react';
+import { X, Plus, UserPlus } from 'lucide-react';
+import { Modal } from '@/components/ui/Modal';
+import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
+import { FormActions } from '@/components/ui/Form';
+import CreatableSelect from 'react-select/creatable';
 
 interface Customer {
   id: string;
   name: string;
   email: string;
+}
+
+interface CustomerOption {
+  value: string;
+  label: string;
+  __isNew?: boolean;
 }
 
 export default function CreateInvoicePage() {
@@ -29,7 +39,21 @@ export default function CreateInvoicePage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(false);
   const [pageLoading, setPageLoading] = useState(true);
-  
+  const [isCustomerModalOpen, setIsCustomerModalOpen] = useState(false);
+  const [newCustomerName, setNewCustomerName] = useState('');
+
+  // Form new customer
+  const {
+    register: registerCustomer,
+    handleSubmit: handleCustomerSubmit,
+    reset: resetCustomer,
+    formState: { errors: customerErrors, isSubmitting: isCustomerSubmitting },
+  } = useForm<CustomerFormData>({
+    resolver: zodResolver(customerSchema),
+    defaultValues: { name: '', email: '', phone: '', address: '' },
+  });
+
+  // Form invoice
   const {
     register,
     control,
@@ -57,6 +81,7 @@ export default function CreateInvoicePage() {
     label: `${c.name} - ${c.email}`,
   }));
 
+  // Fetch customers
   useEffect(() => {
     const init = async () => {
       setPageLoading(true);
@@ -81,6 +106,7 @@ export default function CreateInvoicePage() {
     return <SkeletonForm />;
   }
 
+  // Submit invoice
   const onSubmit = async (data: InvoiceFormData) => {
     if (!data.customerId) {
       toast.error('Please select a customer');
@@ -121,7 +147,56 @@ export default function CreateInvoicePage() {
     }
   };
 
-  // Hitung totals dari form values
+  // Submit new customer
+  const onCustomerSubmit = async (data: CustomerFormData) => {
+    try {
+      const res = await api.post('/customers', data);
+      toast.success('Customer created successfully!');
+      
+      // Refresh customer list
+      const customerRes = await api.get('/customers');
+      setCustomers(customerRes.data?.data || []);
+      
+      // Auto-select new created customer
+      setValue('customerId', res.data.id);
+      
+      setIsCustomerModalOpen(false);
+      resetCustomer();
+      setNewCustomerName('');
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        toast.error(error.response?.data?.message || 'Failed to create customer');
+      } else {
+        toast.error('An unexpected error occurred');
+      }
+    }
+  };
+
+  const CustomOption = (props: OptionProps<CustomerOption>) => {
+    const { data } = props;
+    
+    if (data.__isNew) {
+      return (
+        <components.Option {...props}>
+          <div 
+            className="flex items-center gap-2 text-blue-600 font-medium cursor-pointer"
+            onClick={() => {
+              const cleanName = data.label.replace('+ Create "', '').replace('"', '');
+              setNewCustomerName(cleanName);
+              setIsCustomerModalOpen(true);
+            }}
+          >
+            <UserPlus className="w-4 h-4" />
+            Create "{data.label.replace('+ Create "', '').replace('"', '')}"
+          </div>
+        </components.Option>
+      );
+    }
+    
+    return <components.Option {...props} />;
+  };
+
+  // Hitung totals
   const itemsValues = watch('items');
   const subtotal = itemsValues?.reduce((sum, item) => sum + (item.quantity || 0) * (item.unitPrice || 0), 0) || 0;
   const tax = subtotal * 0.11;
@@ -149,19 +224,34 @@ export default function CreateInvoicePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <FormField label="Customer" error={errors.customerId?.message} required>
-                <Select
-                  options={customerOptions}
-                  value={customerOptions.find((opt) => opt.value === watch('customerId'))}
-                  onChange={(option) => setValue('customerId', option?.value || '')}
-                  placeholder="Search customer..."
-                  isClearable
-                  className="text-sm"
-                  classNames={{
-                    control: (state) => 
-                      `rounded-lg border ${errors.customerId ? 'border-red-500' : 'border-gray-300'} 
-                      ${state.isFocused ? 'border-blue-500 ring-2 ring-blue-200' : ''}`,
-                  }}
-                />
+                <CreatableSelect
+                    options={customerOptions}
+                    value={customerOptions.find((opt) => opt.value === watch('customerId'))}
+                    onChange={(option) => {
+                      if (option && !Array.isArray(option)) {
+                        setValue('customerId', (option as { value: string })?.value || '');
+                      } else {
+                        setValue('customerId', '');
+                      }
+                    }}
+                    placeholder="Search or create customer..."
+                    isClearable
+                    className="text-sm"
+                    classNames={{
+                      control: (state) => 
+                        `rounded-lg border ${errors.customerId ? 'border-red-500' : 'border-gray-300'} 
+                        ${state.isFocused ? 'border-blue-500 ring-2 ring-blue-200' : ''}`,
+                    }}
+                    components={{ Option: CustomOption }}
+                    formatCreateLabel={(inputValue) => `+ Create "${inputValue}"`}
+                    onCreateOption={(inputValue) => {
+                      setNewCustomerName(inputValue);
+                      setIsCustomerModalOpen(true);
+                    }}
+                  />
+                <p className="text-xs text-gray-400 mt-1">
+                  💡 Type customer name and click "Create" to add new customer
+                </p>
               </FormField>
             </div>
             <div>
@@ -185,6 +275,7 @@ export default function CreateInvoicePage() {
           </div>
         </Card>
 
+        {/* Invoice Items */}
         <Card className="mb-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold text-gray-900">Invoice Items</h2>
@@ -286,6 +377,52 @@ export default function CreateInvoicePage() {
           </Button>
         </div>
       </form>
+
+      {/* Modal Create Customer */}
+      <Modal
+        isOpen={isCustomerModalOpen}
+        onClose={() => {
+          setIsCustomerModalOpen(false);
+          resetCustomer();
+          setNewCustomerName('');
+        }}
+        title="Create New Customer"
+      >
+        <form onSubmit={handleCustomerSubmit(onCustomerSubmit)} className="space-y-4">
+          <FormField label="Name" error={customerErrors.name?.message} required>
+            <Input 
+              {...registerCustomer('name')} 
+              placeholder="Customer name"
+              defaultValue={newCustomerName}
+            />
+          </FormField>
+          <FormField label="Email" error={customerErrors.email?.message} required>
+            <Input {...registerCustomer('email')} placeholder="customer@example.com" />
+          </FormField>
+          <FormField label="Phone" error={customerErrors.phone?.message}>
+            <Input {...registerCustomer('phone')} placeholder="Phone number" />
+          </FormField>
+          <FormField label="Address" error={customerErrors.address?.message}>
+            <Input {...registerCustomer('address')} placeholder="Address" />
+          </FormField>
+          <FormActions>
+            <Button type="submit" loading={isCustomerSubmitting}>
+              Create Customer
+            </Button>
+            <Button 
+              type="button" 
+              variant="secondary" 
+              onClick={() => {
+                setIsCustomerModalOpen(false);
+                resetCustomer();
+                setNewCustomerName('');
+              }}
+            >
+              Cancel
+            </Button>
+          </FormActions>
+        </form>
+      </Modal>
     </div>
   );
 }

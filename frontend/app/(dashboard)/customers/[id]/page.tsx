@@ -8,6 +8,7 @@ import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Skeleton, SkeletonCard, SkeletonText } from '@/components/ui/Skeleton';
+import { ArrowLeft } from 'lucide-react';
 
 interface CustomerDetail {
   id: string;
@@ -74,8 +75,9 @@ export default function CustomerDetailPage() {
     <div className="max-w-4xl mx-auto">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold text-gray-900">{customer.name}</h1>
-        <Button variant="secondary" onClick={() => router.push('/customers')}>
-          ← Back
+        <Button variant="secondary" onClick={() => router.push('/customers')} className="flex items-center gap-1">
+          <ArrowLeft className="w-4 h-4" />
+          Back
         </Button>
       </div>
 
