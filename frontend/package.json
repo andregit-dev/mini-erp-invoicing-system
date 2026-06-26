@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
+    "@types/react-csv": "^1.1.10",
     "axios": "^1.18.1",
     "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.8",
