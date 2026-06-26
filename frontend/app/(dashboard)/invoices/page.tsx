@@ -316,14 +316,14 @@ export default function InvoicesPage() {
             </select>
           </div>
 
-          {/* 🔥 Date Range Picker - AUTO DEBOUNCE */}
+          {/* Date Range Picker - AUTO DEBOUNCE */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Due date:</span>
             <div className="flex items-center gap-1 bg-gray-50 border border-gray-300 rounded-lg px-2 py-1">
               <Calendar className="w-4 h-4 text-gray-400" />
               <DatePicker
                 selected={startDate}
-                onChange={(date) => setStartDate(date)}
+                onChange={(date: Date | null) => setStartDate(date)}
                 selectsStart
                 startDate={startDate}
                 endDate={endDate}
@@ -335,7 +335,7 @@ export default function InvoicesPage() {
               <span className="text-gray-400 text-sm">→</span>
               <DatePicker
                 selected={endDate}
-                onChange={(date) => setEndDate(date)}
+                onChange={(date: Date | null) => setStartDate(date)}
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
@@ -347,7 +347,7 @@ export default function InvoicesPage() {
               />
             </div>
 
-            {/* 🔥 Spinner loading + Clear button */}
+            {/* Spinner loading + Clear button */}
             {isDateLoading && (
               <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
             )}
