@@ -23,7 +23,7 @@ function generateCustomers(count: number) {
     customers.push({
       name: `${company}`,
       email: faker.internet.email({ firstName, lastName }).toLowerCase(),
-      phone: faker.phone.number('+62 8## #### ####'),
+      phone: `+62 8${faker.string.numeric(2)} ${faker.string.numeric(4)} ${faker.string.numeric(4)}`,
       address: faker.location.streetAddress(true) + ', ' + faker.location.city() + ', ' + faker.location.country(),
     });
   }
