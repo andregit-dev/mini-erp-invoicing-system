@@ -7,6 +7,43 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { AxiosError } from 'axios';
 import { Mail, Lock, Loader2, Clock } from 'lucide-react';
 
+const formatErrorMessage = (message: string | string[]): string => {
+  if (!message) return 'An unexpected error occurred';
+  if (Array.isArray(message)) {
+    return message
+      .map((err) => {
+        const formatted = err
+          .replace(/should not be empty/g, 'is required')
+          .replace(/must be an email/g, 'is invalid')
+          .replace(/must be a string/g, 'is invalid');
+        return `• ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+      })
+      .join('\n');
+  }
+
+  const errors = message.split(',').map((err) => err.trim());
+  
+  if (errors.length > 1) {
+    return errors
+      .map((err) => {
+        const formatted = err
+          .replace(/should not be empty/g, 'is required')
+          .replace(/must be an email/g, 'is invalid')
+          .replace(/must be a string/g, 'is invalid');
+        return `• ${formatted.charAt(0).toUpperCase() + formatted.slice(1)}`;
+      })
+      .join('\n');
+  }
+
+  // SINGLE ERROR
+  const formatted = errors[0]
+    .replace(/should not be empty/g, 'is required')
+    .replace(/must be an email/g, 'is invalid')
+    .replace(/must be a string/g, 'is invalid');
+  
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+};
+
 export default function LoginPage() {
   const router = useRouter();
   const login = useAuthStore((state) => state.login);
@@ -39,7 +76,8 @@ export default function LoginPage() {
     } catch (err) {
       if (err instanceof AxiosError) {
         const status = err.response?.status;
-        const message = err.response?.data?.message || 'Login failed';
+        const rawMessage = err.response?.data?.message || 'Login failed';
+        const message = formatErrorMessage(rawMessage);
         
         if (status === 429) {
           const retryAfter = err.response?.headers?.['retry-after'] 
@@ -73,7 +111,7 @@ export default function LoginPage() {
                 ? 'bg-yellow-50 text-yellow-700 border-yellow-200' 
                 : 'bg-red-50 text-red-600 border-red-200'
             }`}>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 whitespace-pre-wrap">
                 {rateLimit && <Clock className="w-4 h-4" />}
                 {error}
               </div>
