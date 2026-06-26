@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react'; // ← tambah useRef
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
@@ -41,7 +41,8 @@ export default function InvoicesPage() {
   const [filter, setFilter] = useState('');
   const [startDate, setStartDate] = useState<Date | null>(null);
   const [endDate, setEndDate] = useState<Date | null>(null);
-  const [dateRangeKey, setDateRangeKey] = useState(0); // Trigger fetch
+  const [isDateLoading, setIsDateLoading] = useState(false);
+  const [shouldClear, setShouldClear] = useState(false);
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = useState('');
@@ -54,6 +55,11 @@ export default function InvoicesPage() {
     limit: 10,
     totalPages: 0,
   });
+  
+  // ref debounce timer
+  const dateRangeTimerRef = useRef<NodeJS.Timeout | null>(null);
+  // ref tracking first load
+  const isFirstLoadRef = useRef(true);
 
   const fetchInvoices = async (page: number = 1) => {
     setLoading(true);
@@ -84,9 +90,11 @@ export default function InvoicesPage() {
       // 401 auto handled
     } finally {
       setLoading(false);
+      setIsDateLoading(false);
     }
   };
 
+  // Debounce search
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedSearch(search);
@@ -95,6 +103,57 @@ export default function InvoicesPage() {
     return () => clearTimeout(timer);
   }, [search]);
 
+  // Debounce Date Range
+  useEffect(() => {
+    // Skip first load
+    if (isFirstLoadRef.current) {
+      isFirstLoadRef.current = false;
+      return;
+    }
+
+    // Clear timer
+    if (dateRangeTimerRef.current) {
+      clearTimeout(dateRangeTimerRef.current);
+      dateRangeTimerRef.current = null;
+    }
+
+    if (!startDate || !endDate) {
+      setIsDateLoading(false);
+      return;
+    }
+
+    // Validation
+    if (startDate > endDate) {
+      toast.error('Start date cannot be greater than end date');
+      setIsDateLoading(false);
+      return;
+    }
+
+    // Fetch debounce
+    setIsDateLoading(true);
+    dateRangeTimerRef.current = setTimeout(() => {
+      fetchInvoices(1);
+      dateRangeTimerRef.current = null;
+    }, 1500);
+
+    // Cleanup
+    return () => {
+      if (dateRangeTimerRef.current) {
+        clearTimeout(dateRangeTimerRef.current);
+        dateRangeTimerRef.current = null;
+      }
+    };
+  }, [startDate, endDate]);
+
+  // Fetch filter, search, sort
+  useEffect(() => {
+    if (isFirstLoadRef.current) return;  
+    if (isDateLoading) return;
+    
+    fetchInvoices(1);
+  }, [filter, debouncedSearch, sortBy, sortOrder]);
+
+  // Initial load
   useEffect(() => {
     const init = async () => {
       const valid = await checkAuth();
@@ -105,20 +164,21 @@ export default function InvoicesPage() {
       fetchInvoices();
     };
     init();
-  }, [router, filter, debouncedSearch, sortBy, sortOrder, dateRangeKey]);
+  }, [router]);
 
-  const applyDateRange = () => {
-    if (startDate && endDate && startDate > endDate) {
-      toast.error('Start date cannot be greater than end date');
-      return;
+  
+  useEffect(() => {
+    if (shouldClear) {
+      fetchInvoices(1);
+      setShouldClear(false);
     }
-    setDateRangeKey((prev) => prev + 1);
-  };
+  }, [shouldClear]);
 
   const clearDateRange = () => {
     setStartDate(null);
     setEndDate(null);
-    setDateRangeKey((prev) => prev + 1);
+    setIsDateLoading(false);
+    setShouldClear(true);  
   };
 
   const updateStatus = async (id: string, newStatus: string) => {
@@ -193,7 +253,6 @@ export default function InvoicesPage() {
     </th>
   );
 
-
   return (
     <div className="p-4 sm:p-6 md:p-8">
       <div className="max-w-6xl mx-auto">
@@ -257,7 +316,7 @@ export default function InvoicesPage() {
             </select>
           </div>
 
-          {/* Date Range Picker */}
+          {/* 🔥 Date Range Picker - AUTO DEBOUNCE */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Due date:</span>
             <div className="flex items-center gap-1 bg-gray-50 border border-gray-300 rounded-lg px-2 py-1">
@@ -288,14 +347,11 @@ export default function InvoicesPage() {
               />
             </div>
 
-            {/* Apply & Clear */}
-            <button
-              onClick={applyDateRange}
-              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
-            >
-              Apply
-            </button>
-
+            {/* 🔥 Spinner loading + Clear button */}
+            {isDateLoading && (
+              <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />
+            )}
+            
             {(startDate || endDate) && (
               <button
                 onClick={clearDateRange}
@@ -306,11 +362,6 @@ export default function InvoicesPage() {
             )}
           </div>
         </div>
-
-        {/* Result count */}
-        {/* <span className="text-xs text-gray-500 mt-1 block mb-4">
-          {loading ? 'Loading...' : `Found ${pagination.total} invoices`}
-        </span> */}
 
         {/* Table */}
         {loading ? (
