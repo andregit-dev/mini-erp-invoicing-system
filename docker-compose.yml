@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: mini-erp-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./backend/.env
+    environment:
+      - NODE_ENV=PROD
+      - DATABASE_URL=file:/app/prisma/dev.db
+    volumes:
+      - ./backend/prisma:/app/prisma
+    networks:
+      - mini-erp-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: mini-erp-frontend
+    restart: always
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./frontend/.env.local
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3000
+    depends_on:
+      - backend
+    networks:
+      - mini-erp-network
+
+networks:
+  mini-erp-network:
+    driver: bridge
