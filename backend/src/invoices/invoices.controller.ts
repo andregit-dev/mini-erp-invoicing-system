@@ -42,55 +42,16 @@ export class InvoicesController {
   @ApiOperation({
     summary: 'Get all invoices with filters, search, and pagination',
   })
-  @ApiQuery({
-    name: 'search',
-    required: false,
-    description: 'Search by invoice number or customer name',
-  })
-  @ApiQuery({
-    name: 'status',
-    required: false,
-    enum: InvoiceStatus,
-  })
-  @ApiQuery({
-    name: 'startDate',
-    required: false,
-    description: 'Filter by start date',
-  })
-  @ApiQuery({
-    name: 'endDate',
-    required: false,
-    description: 'Filter by end date',
-  })
-  @ApiQuery({
-    name: 'page',
-    required: false,
-    description: 'Page number',
-  })
-  @ApiQuery({
-    name: 'limit',
-    required: false,
-    description: 'Items per page',
-  })
   @ApiResponse({ status: 200, description: 'List of invoices' })
-  findAll(
-    @Request() req,
-    @Query() filters: FilterInvoiceDto,
-    @Query('search') search?: string,
-    @Query('page') page: string = '1',
-    @Query('limit') limit: string = '10',
-  ) {
+  findAll(@Request() req, @Query() filters: FilterInvoiceDto) {
     return this.invoicesService.findAll(
       req.user.id,
       filters,
-      parseInt(page, 10),
-      parseInt(limit, 10),
-      search,
+      1, // default page
+      10, // default limit
+      filters.search,
     );
   }
-  // GET /invoices?page=1&limit=5
-  // GET /invoices?page=2&limit=5
-  // GET /invoices?status=PAID&page=1&limit=5
 
   @Get('dashboard')
   @ApiOperation({ summary: 'Get dashboard summary' })
