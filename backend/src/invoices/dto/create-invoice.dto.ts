@@ -43,7 +43,8 @@ export class CreateInvoiceDto {
   @ApiProperty({ example: '2026-07-01' })
   @IsNotEmpty()
   @IsDateString()
-  @Validate(IsFutureDate)
+  // TODO: Restrict to ADMIN only when RBAC is implemented
+  // @Validate(IsFutureDate)
   dueDate: string;
 
   @ApiProperty({ example: 'Pembayaran untuk project Q3' })

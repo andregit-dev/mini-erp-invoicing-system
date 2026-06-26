@@ -28,11 +28,12 @@ export const invoiceSchema = z.object({
   dueDate: z
     .string()
     .min(1, 'Due date is required')
-    .regex(futureDateRegex, 'Invalid date format (use YYYY-MM-DD)')
-    .refine(
-      (date) => new Date(date) >= new Date(new Date().setHours(0, 0, 0, 0)),
-      'Due date must be today or in the future'
-    ),
+    .regex(futureDateRegex, 'Invalid date format (use YYYY-MM-DD)'),
+    // TODO: Restrict to ADMIN only when RBAC is implemented
+    // .refine(
+    //   (date) => new Date(date) >= new Date(new Date().setHours(0, 0, 0, 0)),
+    //   'Due date must be today or in the future'
+    // ),
   
   note: z
     .string()
