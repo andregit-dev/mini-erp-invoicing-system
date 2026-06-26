@@ -9,7 +9,7 @@ import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
-import { Search, X, Loader2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, Download, User, UserPlus, Save, X, Loader2, Plus, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import { AxiosError } from 'axios';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
@@ -17,6 +17,7 @@ import { customerSchema, CustomerFormData } from '@/lib/validations/customer';
 import { FormField, FormActions } from '@/components/ui/Form';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { Modal } from '@/components/ui/Modal';
+import { CSVLink } from 'react-csv';
 
 interface Customer {
   id: string;
@@ -201,9 +202,9 @@ export default function CustomersPage() {
           </Button>
         </div>
 
-        {/* Search Box */}
-        <div className="relative mb-4 max-w-md">
-          <div className="relative">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          {/* Search Box */}
+          <div className="relative flex-1 max-w-md min-w-[200px]">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
               type="text"
@@ -233,6 +234,27 @@ export default function CustomersPage() {
               </div>
             )}
           </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Export CSV */}
+            {customers.length > 0 && (
+              <CSVLink
+                data={customers.map((c) => ({
+                  Name: c.name,
+                  Email: c.email,
+                  Phone: c.phone || '-',
+                  Address: c.address || '-',
+                }))}
+                filename={`customers-${new Date().toISOString().split('T')[0]}.csv`}
+                className="inline-flex items-center gap-1 px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 transition"
+              >
+                <Download className="w-4 h-4" />
+                Export CSV
+              </CSVLink>
+            )}
+
+            {/* Additional Button */}
+          </div>
         </div>
 
         {/* Modal */}
@@ -241,19 +263,28 @@ export default function CustomersPage() {
           onClose={handleCloseModal}
           title={editingId ? 'Edit Customer' : 'Add New Customer'}
         >
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-2">
             <FormField label="Name" error={errors.name?.message} required>
               <Input {...register('name')} placeholder="Customer name" />
             </FormField>
+            
             <FormField label="Email" error={errors.email?.message} required>
               <Input {...register('email')} placeholder="customer@example.com" />
             </FormField>
+            
             <FormField label="Phone" error={errors.phone?.message}>
               <Input {...register('phone')} placeholder="Phone number" />
             </FormField>
+            
             <FormField label="Address" error={errors.address?.message}>
-              <Input {...register('address')} placeholder="Address" />
+              <textarea
+                {...register('address')}
+                placeholder="Address"
+                rows={3}
+                className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-200 resize-none"
+              />
             </FormField>
+            
             <FormActions>
               <Button type="submit" loading={isSubmitting}>
                 {editingId ? 'Update' : 'Save'}
