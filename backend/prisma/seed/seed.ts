@@ -78,7 +78,7 @@ function generateItems(count: number) {
 }
 
 async function main() {
-  console.log('🌱 Starting seed with realistic data...');
+  console.log('Starting seed with realistic data...');
 
   const hashedPassword = await bcrypt.hash('password123', 12);
   const users = await Promise.all([
@@ -98,7 +98,7 @@ async function main() {
     }),
   ]);
 
-  console.log(`✅ Created ${users.length} users`);
+  console.log(`Created ${users.length} users`);
 
   const customers = [];
   for (const company of COMPANIES) {
@@ -110,10 +110,10 @@ async function main() {
       },
     });
     customers.push(customer);
-    console.log(`✅ Customer: ${customer.name}`);
+    console.log(`Customer: ${customer.name}`);
   }
 
-  console.log(`✅ Created ${customers.length} customers`);
+  console.log(`Created ${customers.length} customers`);
 
   const now = new Date();
   const thirtyDaysAgo = new Date(now);
@@ -192,22 +192,22 @@ async function main() {
       });
 
       totalInvoices++;
-      console.log(`✅ Invoice ${invoiceNumber} | ${status} | Rp ${total.toLocaleString()} | Due: ${dueDate.toLocaleDateString('id-ID')}`);
+      console.log(`Invoice ${invoiceNumber} | ${status} | Rp ${total.toLocaleString()} | Due: ${dueDate.toLocaleDateString('id-ID')}`);
     }
   }
 
-  console.log('\n📊 SEED SUMMARY:');
-  console.log(`   ✅ ${users.length} users`);
-  console.log(`   ✅ ${customers.length} customers`);
-  console.log(`   ✅ ${totalInvoices} invoices (${ALL_STATUSES.length} statuses per customer)`);
-  console.log(`   ✅ ${totalInvoices * 3} invoice items (avg 3 items per invoice)`);
+  console.log('\nSEED SUMMARY:');
+  console.log(`   ${users.length} users`);
+  console.log(`   ${customers.length} customers`);
+  console.log(`   ${totalInvoices} invoices (${ALL_STATUSES.length} statuses per customer)`);
+  console.log(`   ${totalInvoices * 3} invoice items (avg 3 items per invoice)`);
 
   const statusCounts = await prisma.invoice.groupBy({
     by: ['status'],
     _count: true,
   });
 
-  console.log('\n📈 Status Distribution:');
+  console.log('\nStatus Distribution:');
   for (const item of statusCounts) {
     console.log(`   ${item.status}: ${item._count} invoices`);
   }
@@ -215,7 +215,7 @@ async function main() {
 
 main()
   .catch((e) => {
-    console.error('❌ Seeding failed:', e);
+    console.error('Seeding failed:', e);
     process.exit(1);
   })
   .finally(async () => {
