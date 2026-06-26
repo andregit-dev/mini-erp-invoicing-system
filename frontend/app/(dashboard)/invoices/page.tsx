@@ -6,13 +6,15 @@ import Link from 'next/link';
 import { useAuthStore } from '@/lib/store/authStore';
 import { api } from '@/lib/api';
 import { AxiosError } from 'axios';
-import { Search, X, Loader2, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Search, X, Loader2, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown, Calendar } from 'lucide-react';
 import { toast } from 'sonner';
 import { SkeletonTable } from '@/components/ui/Skeleton';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { StatusBadge, type Status } from '@/components/ui/StatusBadge';
 import { Button } from '@/components/ui/Button';
 import { formatDate } from '@/lib/format';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 interface Invoice {
   id: string;
@@ -37,8 +39,9 @@ export default function InvoicesPage() {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [startDate, setStartDate] = useState<Date | null>(null);
+  const [endDate, setEndDate] = useState<Date | null>(null);
+  const [dateRangeKey, setDateRangeKey] = useState(0); // Trigger fetch
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [search, setSearch] = useState('');
@@ -59,8 +62,14 @@ export default function InvoicesPage() {
       let url = `/invoices?page=${page}&limit=10`;
       if (filter) url += `&status=${filter}`;
       if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
-      if (startDate) url += `&startDate=${startDate}`;
-      if (endDate) url += `&endDate=${endDate}`;
+      
+      if (startDate) {
+        url += `&startDate=${startDate.toISOString().split('T')[0]}`;
+      }
+      if (endDate) {
+        url += `&endDate=${endDate.toISOString().split('T')[0]}`;
+      }
+      
       url += `&sortBy=${sortBy}&sortOrder=${sortOrder}`;
       
       const res = await api.get(url);
@@ -96,7 +105,21 @@ export default function InvoicesPage() {
       fetchInvoices();
     };
     init();
-  }, [router, filter, debouncedSearch, sortBy, sortOrder, startDate, endDate]);
+  }, [router, filter, debouncedSearch, sortBy, sortOrder, dateRangeKey]);
+
+  const applyDateRange = () => {
+    if (startDate && endDate && startDate > endDate) {
+      toast.error('Start date cannot be greater than end date');
+      return;
+    }
+    setDateRangeKey((prev) => prev + 1);
+  };
+
+  const clearDateRange = () => {
+    setStartDate(null);
+    setEndDate(null);
+    setDateRangeKey((prev) => prev + 1);
+  };
 
   const updateStatus = async (id: string, newStatus: string) => {
     const invoice = invoices.find((inv) => inv.id === id);
@@ -234,31 +257,48 @@ export default function InvoicesPage() {
             </select>
           </div>
 
-          {/* Date Range */}
+          {/* Date Range Picker */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <span className="text-sm font-medium text-gray-600 whitespace-nowrap">Due date:</span>
-            <div className="flex items-center bg-gray-50 border border-gray-300 rounded-lg px-1 py-1">
-              <input
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-                className="px-2 py-1.5 text-sm bg-transparent focus:outline-none w-32"
+            <div className="flex items-center gap-1 bg-gray-50 border border-gray-300 rounded-lg px-2 py-1">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <DatePicker
+                selected={startDate}
+                onChange={(date) => setStartDate(date)}
+                selectsStart
+                startDate={startDate}
+                endDate={endDate}
+                placeholderText="Start"
+                className="w-24 text-sm bg-transparent focus:outline-none"
+                dateFormat="MM/dd/yy"
+                isClearable
               />
-              <span className="text-gray-400 text-sm px-1">to</span>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                className="px-2 py-1.5 text-sm bg-transparent focus:outline-none w-32"
+              <span className="text-gray-400 text-sm">→</span>
+              <DatePicker
+                selected={endDate}
+                onChange={(date) => setEndDate(date)}
+                selectsEnd
+                startDate={startDate}
+                endDate={endDate}
+                minDate={startDate || undefined}
+                placeholderText="End"
+                className="w-24 text-sm bg-transparent focus:outline-none"
+                dateFormat="MM/dd/yy"
+                isClearable
               />
             </div>
 
+            {/* Apply & Clear */}
+            <button
+              onClick={applyDateRange}
+              className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+            >
+              Apply
+            </button>
+
             {(startDate || endDate) && (
               <button
-                onClick={() => {
-                  setStartDate('');
-                  setEndDate('');
-                }}
+                onClick={clearDateRange}
                 className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
               >
                 <X className="w-4 h-4" />
@@ -278,12 +318,12 @@ export default function InvoicesPage() {
         ) : invoices.length === 0 ? (
           <EmptyState
             title={
-              search || filter 
+              search || filter || startDate || endDate
                 ? `No invoices found${search ? ` for "${search}"` : ''}${filter ? ` with status "${filter}"` : ''}`
                 : 'No invoices yet'
             }
             description={
-              search || filter 
+              search || filter || startDate || endDate
                 ? 'Try adjusting your search or filters'
                 : 'Create your first invoice to get started'
             }

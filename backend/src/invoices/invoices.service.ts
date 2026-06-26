@@ -100,6 +100,16 @@ export class InvoicesService {
     limit: number = 10,
     search?: string,
   ) {
+    if (filters.startDate && filters.endDate) {
+      const start = new Date(filters.startDate);
+      const end = new Date(filters.endDate);
+      if (start > end) {
+        throw new BadRequestException(
+          'startDate cannot be greater than endDate',
+        );
+      }
+    }
+
     const skip = (page - 1) * limit;
 
     const where: any = {
