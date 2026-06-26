@@ -44,13 +44,7 @@ export class InvoicesController {
   })
   @ApiResponse({ status: 200, description: 'List of invoices' })
   findAll(@Request() req, @Query() filters: FilterInvoiceDto) {
-    return this.invoicesService.findAll(
-      req.user.id,
-      filters,
-      1, // default page
-      10, // default limit
-      filters.search,
-    );
+    return this.invoicesService.findAll(req.user.id, filters);
   }
 
   @Get('dashboard')

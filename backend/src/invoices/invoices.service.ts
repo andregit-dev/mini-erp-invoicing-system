@@ -93,13 +93,10 @@ export class InvoicesService {
     return `INV-${datePrefix}-${String(sequence).padStart(4, '0')}`;
   }
 
-  async findAll(
-    userId: string,
-    filters: FilterInvoiceDto,
-    page: number = 1,
-    limit: number = 10,
-    search?: string,
-  ) {
+  async findAll(userId: string, filters: FilterInvoiceDto) {
+    const page = filters.page || 1;
+    const limit = filters.limit || 10;
+
     if (filters.startDate && filters.endDate) {
       const start = new Date(filters.startDate);
       const end = new Date(filters.endDate);
@@ -110,7 +107,7 @@ export class InvoicesService {
       }
     }
 
-    const skip = (page - 1) * limit;
+    const skip = (filters.page - 1) * filters.limit;
 
     const where: any = {
       userId,
@@ -132,12 +129,12 @@ export class InvoicesService {
       }
     }
 
-    if (search) {
+    if (filters.search) {
       where.OR = [
-        { invoiceNumber: { contains: search } },
+        { invoiceNumber: { contains: filters.search } },
         {
           customer: {
-            name: { contains: search },
+            name: { contains: filters.search },
           },
         },
       ];
