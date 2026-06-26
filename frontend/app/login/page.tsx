@@ -18,7 +18,6 @@ export default function LoginPage() {
   const [rateLimit, setRateLimit] = useState<{ retryAfter: number } | null>(null);
   const [countdown, setCountdown] = useState(0);
 
-  // 🔥 COUNTDOWN TIMER
   useEffect(() => {
     if (countdown > 0) {
       const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
@@ -42,7 +41,6 @@ export default function LoginPage() {
         const status = err.response?.status;
         const message = err.response?.data?.message || 'Login failed';
         
-        // 🔥 DETECT RATE LIMIT (429)
         if (status === 429) {
           const retryAfter = err.response?.headers?.['retry-after'] 
             ? parseInt(err.response.headers['retry-after']) 
@@ -79,11 +77,6 @@ export default function LoginPage() {
                 {rateLimit && <Clock className="w-4 h-4" />}
                 {error}
               </div>
-              {/* {rateLimit && (
-                <div className="mt-1 font-mono text-sm font-bold">
-                  {countdown}s
-                </div>
-              )} */}
             </div>
           )}
 

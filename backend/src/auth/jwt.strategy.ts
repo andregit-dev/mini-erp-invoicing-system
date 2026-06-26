@@ -10,10 +10,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         (request: Request) => {
-          // 🔥 BACA DARI COOKIE
           const token = request.cookies?.token;
           if (token) return token;
-          // FALLBACK KE HEADER (BUAT SWAGGER)
+          // FALLBACK KE HEADER (SWAGGER)
           return ExtractJwt.fromAuthHeaderAsBearerToken()(request);
         },
       ]),

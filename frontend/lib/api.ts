@@ -10,7 +10,6 @@ export const api = axios.create({
   withCredentials: true,
 });
 
-// 🔥 TIPE UNTUK ERROR
 interface ErrorResponse {
   message: string;
   statusCode?: number;
