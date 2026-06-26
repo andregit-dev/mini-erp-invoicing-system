@@ -49,8 +49,13 @@ async function bootstrap() {
     },
   });
 
+  app.use('/api/docs-json', (req, res) => {
+    res.json(document);
+  });
+
   await app.listen(3000);
   console.log(`🚀 Server running on http://localhost:3000`);
   console.log(`📚 Swagger: http://localhost:3000/api/docs`);
+  console.log(`📄 Swagger JSON: http://localhost:3000/api/docs-json`);
 }
 bootstrap();
