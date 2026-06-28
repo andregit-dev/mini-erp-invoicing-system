@@ -4,7 +4,7 @@ dist
 .env
 .env.*
 
-prisma/dev.db
+prisma/*.db
 *.db
 *.db-journal
 
