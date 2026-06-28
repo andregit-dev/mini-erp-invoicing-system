@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   backend:
     image: andreaswidj/mini-erp-backend:v0.1.0
@@ -8,14 +6,14 @@ services:
     ports:
       - "3000:3000"
     env_file:
-      - ./.env
-    environment:
-      - NODE_ENV=${NODE_ENV}
-      - DATABASE_URL=${DATABASE_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
+      - .env
+    # environment:
+    #   - NODE_ENV=${NODE_ENV}
+    #   - DATABASE_URL=${DATABASE_URL}
+    #   - JWT_SECRET=${JWT_SECRET}
+    #   - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
-      - ./prisma:/app/prisma
+      - ./backend/prisma:/app/prisma
     networks:
       - mini-erp-network
 
@@ -26,9 +24,9 @@ services:
     ports:
       - "3001:3001"
     env_file:
-      - ./.env
-    environment:
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
+      - .env
+    # environment:
+    #   - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
       - backend
     networks:
