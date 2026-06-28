@@ -7,7 +7,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { FilterInvoiceDto } from './dto/filter-invoice.dto';
-import { InvoiceStatus } from '../../generated/prisma/enums';
+import { InvoiceStatus } from '../../prisma/generated/prisma/enums';
 
 @Injectable()
 export class InvoicesService {

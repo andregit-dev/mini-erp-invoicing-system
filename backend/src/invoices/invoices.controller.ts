@@ -15,14 +15,12 @@ import {
   ApiOperation,
   ApiResponse,
   ApiTags,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { InvoicesService } from './invoices.service';
 import { CreateInvoiceDto } from './dto/create-invoice.dto';
 import { UpdateStatusDto } from './dto/update-status.dto';
 import { FilterInvoiceDto } from './dto/filter-invoice.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { InvoiceStatus } from '../../generated/prisma/enums';
 
 @ApiTags('invoices')
 @ApiBearerAuth()

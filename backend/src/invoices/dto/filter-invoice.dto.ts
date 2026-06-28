@@ -1,7 +1,7 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { IsOptional, IsEnum, IsDateString, IsString, IsInt, Min } from 'class-validator';
 import { Type } from 'class-transformer';
-import { InvoiceStatus } from '../../../generated/prisma/enums';
+import { InvoiceStatus } from '../../../prisma/generated/prisma/enums';
 
 export enum SortField {
   INVOICE_NUMBER = 'invoiceNumber',
