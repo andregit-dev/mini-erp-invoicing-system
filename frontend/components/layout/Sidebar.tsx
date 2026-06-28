@@ -30,16 +30,17 @@ export function Sidebar() {
         className={`
           fixed top-0 left-0 z-40
           w-64 h-screen bg-gray-900 text-white p-4
+          overflow-y-auto
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full'}
-          lg:translate-x-0 lg:relative lg:block
+          lg:translate-x-0 lg:relative lg:block lg:h-auto lg:min-h-screen
         `}
       >
         <div className="mb-8 mt-2">
           <h1 className="text-xl font-bold tracking-tight">Mini ERP</h1>
         </div>
 
-        <nav className="space-y-1">
+        <nav className="space-y-1 pb-8">
           {menu.map(({ href, label, icon: Icon }) => (
             <Link
               key={href}
