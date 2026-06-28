@@ -23,7 +23,7 @@ export function Header() {
   };
 
   return (
-    <header className="bg-white border-b border-gray-200 px-4 py-3 sm:px-6">
+    <header className="sticky top-0 z-30 bg-white border-b border-gray-200 px-4 py-3 sm:px-6 shadow-sm">
       <div className="flex items-center justify-between gap-2">
         {/* Left: Title */}
         <h2 className="text-base sm:text-lg font-semibold text-gray-800 whitespace-nowrap">
