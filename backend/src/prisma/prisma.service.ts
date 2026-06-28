@@ -14,7 +14,7 @@ export class PrismaService
 
     if (databaseUrl && databaseUrl.startsWith('file:./')) {
       const relativePath = databaseUrl.replace('file:./', '');
-      const absolutePath = path.resolve(process.cwd(), relativePath);
+      const absolutePath = path.join(process.cwd(), 'prisma', relativePath);
       databaseUrl = `file:${absolutePath}`;
       console.log('* Resolved DATABASE_URL:', databaseUrl);
     }
@@ -30,7 +30,9 @@ export class PrismaService
 
   async onModuleInit() {
     await this.$connect();
-    console.log('✅ Database connected!');
+    console.log('');
+    console.log('Database connected!');
+    console.log('');
   }
 
   async onModuleDestroy() {
