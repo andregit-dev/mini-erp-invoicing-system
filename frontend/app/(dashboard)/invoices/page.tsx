@@ -335,7 +335,7 @@ export default function InvoicesPage() {
               <span className="text-gray-400 text-sm">→</span>
               <DatePicker
                 selected={endDate}
-                onChange={(date: Date | null) => setStartDate(date)}
+                onChange={(date: Date | null) => setEndDate(date)}
                 selectsEnd
                 startDate={startDate}
                 endDate={endDate}
