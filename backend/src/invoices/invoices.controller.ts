@@ -27,7 +27,7 @@ import { InvoiceStatus } from '../../generated/prisma/enums';
 @ApiTags('invoices')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
-@Controller('api/invoices')
+@Controller('invoices')
 export class InvoicesController {
   constructor(private readonly invoicesService: InvoicesService) {}
 

@@ -11,6 +11,8 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  app.setGlobalPrefix('api');
+
   const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',') || ['http://localhost:3001'];
 
   app.enableCors({
@@ -62,9 +64,9 @@ async function bootstrap() {
     },
   });
 
-  app.use('/api/docs-json', (req, res) => {
-    res.json(document);
-  });
+  // app.use('/api/docs-json', (req, res) => {
+  //   res.json(document);
+  // });
 
   await app.listen(3000);
   console.log(`🚀 Server running on http://localhost:3000`);
