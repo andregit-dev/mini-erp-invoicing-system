@@ -106,7 +106,6 @@ async function main() {
   for (const customer of customers) {
     const randomUser = faker.helpers.arrayElement(users);
 
-  
     for (let i = 0; i < 10; i++) {
       // Random status
       const status = faker.helpers.arrayElement(ALL_STATUSES);
@@ -120,9 +119,7 @@ async function main() {
       const dueDate = faker.date.between({ from: thirtyDaysAgo, to: thirtyDaysFuture });
 
       // Generate invoice number
-      const datePrefix = now.getFullYear() + 
-        String(now.getMonth() + 1).padStart(2, '0') + 
-        String(now.getDate()).padStart(2, '0');
+      const datePrefix = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
 
       const lastInvoice = await prisma.invoice.findFirst({
         where: {
