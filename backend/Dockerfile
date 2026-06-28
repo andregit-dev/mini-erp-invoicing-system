@@ -1,3 +1,6 @@
+# =========================
+# Builder
+# =========================
 FROM node:20-bookworm-slim AS builder
 
 WORKDIR /app
@@ -10,22 +13,29 @@ COPY . .
 RUN npx prisma generate
 RUN npm run build
 
-# Production stage
-FROM node:20-bookworm-slim AS runner
+RUN mkdir -p dist/prisma/generated/prisma && \
+    cp prisma/generated/prisma/*.so.node dist/prisma/generated/prisma/
+
+# =========================
+# Runner
+# =========================
+FROM node:20-bookworm-slim AS Runner
+
+RUN apt-get update && \
+    apt-get install -y openssl && \
+    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
-
+ENV NODE_ENV=production
+# COPY --from=builder /app .
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 
-RUN npx prisma generate
+EXPOSE 3000
 
-# Copy entrypoint
 COPY entrypoint.sh .
 RUN chmod +x entrypoint.sh
-
-EXPOSE 3000
 
 ENTRYPOINT ["./entrypoint.sh"]
