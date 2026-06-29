@@ -17,7 +17,7 @@ services:
   frontend:
     build:
       context: ./frontend
-      dockerfile: Dockerfile.local
+      dockerfile: Dockerfile.build.local
     container_name: mini-erp-frontend-local
     restart: always
     ports:
