@@ -65,7 +65,7 @@ For full setup details, environment variable references, and troubleshooting, re
 ### 1. Clone the Repository
 
 ```bash
-git clone <repo-url>
+git clone git@github.com:andregit-dev/mini-erp-invoicing-system.git
 cd mini-erp-invoicing
 ```
 
