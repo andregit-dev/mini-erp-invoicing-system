@@ -369,7 +369,36 @@ All steps are wrapped in a **Prisma transaction (`$transaction`)** to guarantee 
 
 ---
 
-## Future Evolution
+## Live Demo
+
+A live version is available on a VPS (Debian 13) with limited resources. First load may take a few seconds (cold start).
+
+| Service | URL |
+|---------|-----|
+| **Frontend** | [https://mini-erp.appndre.uk/](https://mini-erp.appndre.uk/) |
+| **Backend API** | [https://mini-erp.appndre.uk/api](https://mini-erp.appndre.uk/api) |
+| **Swagger Docs** | [https://mini-erp.appndre.uk/api/docs](https://mini-erp.appndre.uk/api/docs) |
+
+---
+
+### Test Credentials (After Seeding)
+
+After running the seed command, you can use the following account to test the application:
+
+| Field | Value |
+|-------|-------|
+| **Email** | `admin@example.com` |
+| **Password** | `password123` |
+
+> This account is automatically created during the seeding process (`npm run seed:faker`). Make sure to run the seed command first if you're running locally.
+>
+> **Note:** These credentials work for **both** the local environment (after running `npm run seed:faker`) and the live demo.
+>
+> For detailed seeding and setup instructions, see **`_docs/scripts.md`**.
+
+---
+
+## Future Improvements
 
 ### Microservices Strategy
 
@@ -412,5 +441,4 @@ Phase 3 - Full MFE:
 ```
 
 ---
-
 
