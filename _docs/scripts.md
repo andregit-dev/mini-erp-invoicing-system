@@ -52,7 +52,7 @@ project/
 │   └── Dockerfile.build.local
 └── docker-compose.local.yml
 ```
-### Docker (Local)
+## Docker (Local)
 
 Start:
 
@@ -150,3 +150,34 @@ Available at:
 * [http://localhost:3001](http://localhost:3001)
 
 ---
+
+## Production-like Build (Optional)
+
+If you want to test production build locally (without hot reload):
+
+```bash
+# Build locally
+docker build -f ./frontend/Dockerfile.build.local -t mini-erp-frontend:prod-local ./frontend
+docker build -f ./backend/Dockerfile -t mini-erp-backend:prod-local ./backend
+
+#
+# Then update docker-compose.prod.yml temporarily:
+#
+# -------------------------------------------------
+# services:
+#   backend:
+#     image: mini-erp-backend:prod-local
+#     container_name: mini-erp-backend-prod-local
+#     # ... rest same
+#
+#   frontend:
+#     image: mini-erp-frontend:prod-local
+#     container_name: mini-erp-frontend-prod-local
+#     # ... rest same
+#
+# -------------------------------------------------
+#
+
+# Run
+docker compose -f docker-compose.prod.yml up -d
+```
