@@ -7,26 +7,19 @@ services:
       - "3000:3000"
     env_file:
       - .env
-    # environment:
-    #   - NODE_ENV=${NODE_ENV}
-    #   - DATABASE_URL=${DATABASE_URL}
-    #   - JWT_SECRET=${JWT_SECRET}
-    #   - ALLOWED_ORIGINS=${ALLOWED_ORIGINS}
     volumes:
-      - ./backend/prisma:/app/prisma
+      - ./data:/app/data
     networks:
       - mini-erp-network
 
   frontend:
-    image: andreaswidj/mini-erp-frontend:v0.1.0
+    image: andreaswidj/mini-erp-frontend:v0.1.1
     container_name: mini-erp-frontend
     restart: always
     ports:
       - "3001:3001"
     env_file:
       - .env
-    # environment:
-    #   - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     depends_on:
       - backend
     networks:

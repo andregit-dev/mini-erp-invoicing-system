@@ -10,6 +10,7 @@ RUN npm install
 COPY . .
 
 # Build Next.js
+COPY .env.production .env
 RUN npm run build
 
 # Production image
