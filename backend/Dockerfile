@@ -19,7 +19,7 @@ RUN mkdir -p dist/prisma/generated/prisma && \
 # =========================
 # Runner
 # =========================
-FROM node:20-bookworm-slim AS Runner
+FROM node:20-bookworm-slim AS runner
 
 RUN apt-get update && \
     apt-get install -y openssl && \
