@@ -1,6 +1,6 @@
-# Development Guide
+## Development Guide
 
-## Docker Requirements
+### Docker Requirements
 
 This project uses **Docker Compose V2**.
 
@@ -23,7 +23,36 @@ If the command returns the Docker Compose version, the installation is successfu
 
 ---
 
-## Docker (Local)
+### Setup Environment Variables
+
+#### Backend:
+
+```bash
+cd backend
+cp .env.example .env
+```
+#### Frontend:
+
+```bash
+cd frontend
+cp .env.example .env.local
+```
+#### structure:
+
+```text
+project/
+├── backend/
+│   ├── .env.example
+│   ├── .env              # ← Copy from .env.example
+│   └── Dockerfile
+├── frontend/
+│   ├── .env.example
+│   ├── .env.local        # ← Copy from .env.example
+│   ├── Dockerfile
+│   └── Dockerfile.build.local
+└── docker-compose.local.yml
+```
+### Docker (Local)
 
 Start:
 
@@ -43,16 +72,16 @@ Stop:
 docker compose -f docker-compose.local.yml down
 ```
 
-### Seed Database (Docker)
+#### Seed Database (Docker)
 
 ```bash
-docker container list
+docker container list --format "table {{.Names}}" | grep backend
 docker exec -it <backend-container-name> npm run seed:faker
 ```
 
 ---
 
-## Backend (Local)
+### Backend (Local)
 
 Start development server:
 
@@ -60,7 +89,7 @@ Start development server:
 npm run start:dev
 ```
 
-### Seed Database
+#### Seed Database
 
 ```bash
 npm run seed:faker
@@ -68,7 +97,7 @@ npm run seed:faker
 
 ---
 
-## Frontend (Local)
+### Frontend (Local)
 
 Start development server:
 
@@ -78,9 +107,9 @@ npm run dev
 
 ---
 
-# Production Build (Without Docker)
+## Production Build (Without Docker)
 
-## Backend
+### Backend
 
 Build:
 
@@ -102,7 +131,7 @@ Available endpoints:
 
 ---
 
-## Frontend
+### Frontend
 
 Build:
 
