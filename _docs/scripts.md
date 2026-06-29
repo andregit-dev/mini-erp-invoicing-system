@@ -17,6 +17,7 @@ Verify the installation:
 
 ```bash
 docker compose version
+# Docker Compose version v5.2.0
 ```
 
 If the command returns the Docker Compose version, the installation is successful.
@@ -57,6 +58,7 @@ project/
 Start:
 
 ```bash
+cd .. # Navigate to the project root folder (mini-erp-invoicing-system)
 docker compose -f docker-compose.local.yml up
 ```
 
