@@ -66,7 +66,7 @@ For full setup details, environment variable references, and troubleshooting, re
 
 ```bash
 git clone git@github.com:andregit-dev/mini-erp-invoicing-system.git
-cd mini-erp-invoicing
+cd mini-erp-invoicing-system
 ```
 
 ### 2. Backend
@@ -76,17 +76,17 @@ cd backend
 cp .env.example .env
 npm install
 npx prisma generate
-npx prisma migrate dev --name init
+npx prisma migrate dev
 npm run start:dev
 ```
-
 Backend runs at: `http://localhost:3000`
 Swagger docs: `http://localhost:3000/api/docs`
+
 
 ### 3. Frontend
 
 ```bash
-cd frontend
+cd ../frontend
 cp .env.example .env.local
 npm install
 npm run dev
@@ -97,9 +97,40 @@ Frontend runs at: `http://localhost:3001`
 ### 4. Seed (Optional)
 
 ```bash
-cd backend
+cd ../backend
 npm run seed          # basic seed
 npm run seed:faker    # seed with faker data
+```
+
+### 5. Troubleshooting
+
+#### Prisma & Database Reset
+
+If you encounter Prisma Client errors—especially when switching between **from Docker to Local environments**—use these commands to clean and reset your state.
+
+#### a. Fix Corrupted / Missing Prisma Client
+
+```bash
+# Clean up old build artifacts
+rm -rf prisma/generated node_modules/.prisma
+
+# Regenerate fresh Prisma client
+npx prisma generate
+
+```
+
+#### b. Hard Reset Local SQLite Database
+
+If you need to wipe out the local database completely due to data conflicts or constraints:
+
+```bash
+# Remove physical SQLite database files and journals
+rm -f prisma/*.db prisma/*.db-journal
+
+# Re-initialize everything from scratch
+npx prisma generate
+npx prisma migrate dev
+
 ```
 
 ---
@@ -147,7 +178,7 @@ ERD diagram is available at `_docs/mini-erp-erd.png`.
 ```
 User     ──< Customer     (1:N)
 User     ──< Invoice      (1:N)
-Customer ──< Invoice      (1:N)
+Customer ──< Invoice      (1:N, onDelete: Cascade)
 Invoice  ──< InvoiceItem  (1:N, onDelete: Cascade)
 ```
 
@@ -304,7 +335,7 @@ All steps are wrapped in a **Prisma transaction (`$transaction`)** to guarantee 
 
 - **Customer** uses **soft delete** — records are flagged with `deletedAt` timestamp, not physically removed
 - **Invoice has no delete feature** by design — invoices are financial records and must be retained for audit trails
-- When a customer is soft-deleted, their associated invoices remain intact in the database but the customer is no longer accessible for new invoices
+- When a customer is soft-deleted, their associated invoices **remain intact and accessible** in the database, but the customer is no longer selectable for new invoices
 - `InvoiceItem` uses `onDelete: Cascade` — items are removed if the parent invoice is deleted (admin/dev only)
 
 ---
@@ -441,4 +472,3 @@ Phase 3 - Full MFE:
 ```
 
 ---
-
