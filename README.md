@@ -107,7 +107,7 @@ npm run seed:faker    # seed with faker data
 ## Project Structure
 
 ```
-mini-erp-invoicing/
+mini-erp-invoicing-system/
 ├── backend/
 │   ├── src/
 │   │   ├── auth/           # JWT auth module
